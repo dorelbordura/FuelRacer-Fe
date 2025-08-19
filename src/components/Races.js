@@ -66,7 +66,63 @@ function useCountdown(targetDate) {
   };
 }
 
-async function api(path, opts = {}) {
+export function useRaceCountdown(startDate, endDate) {
+  const startCountdown = useCountdown(startDate);
+  const endCountdown = useCountdown(endDate);
+
+  return useMemo(() => {
+    const now = Date.now();
+    const start = startDate?.getTime() ?? 0;
+    const end = endDate?.getTime() ?? 0;
+
+    if (now < start) {
+      // Race hasn't started yet
+      return {
+        active: false,
+        timeToStart: startCountdown.label,
+        timeToEnd: null
+      };
+    } else if (now >= start && now < end) {
+      // Race is running
+      return {
+        active: true,
+        timeToStart: null,
+        timeToEnd: endCountdown.label
+      };
+    } else {
+      // Race already finished
+      return {
+        active: false,
+        timeToStart: null,
+        timeToEnd: null
+      };
+    }
+  }, [startDate, endDate, startCountdown, endCountdown]);
+}
+
+
+export function useFuelRacerCountdown(raceData) {
+  const activeStart = raceData.active ? toDate(raceData.active.startAt) : null;
+  const activeEnd = raceData.active ? toDate(raceData.active.endAt) : null;
+  const nextStart = raceData.upcoming?.length > 0 ? toDate(raceData.upcoming[0].startAt) : null;
+  const nextEnd = raceData.upcoming?.length > 0 ? toDate(raceData.upcoming[0].endAt) : null;
+
+
+  // Always call the hooks, even if dates are null
+  const activeCountdown = useRaceCountdown(activeStart, activeEnd);
+  const nextCountdown = useRaceCountdown(nextStart, nextEnd);
+
+  if (raceData.active) {
+    return activeCountdown;
+  } else if (raceData.upcoming?.length > 0) {
+    return nextCountdown;
+  } else {
+    return { active: false, timeToStart: null, timeToEnd: null };
+  }
+}
+
+
+export async function api(path, opts = {}) {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), 10000);
   const headers = useAuthHeader();
