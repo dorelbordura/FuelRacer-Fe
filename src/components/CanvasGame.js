@@ -284,7 +284,7 @@ export default function RacingGame({ onFinish, finalTime }) {
           background: "#111",
         }}
       />
-      {finished && (
+      {finished && finalTime && (
         <div
           style={{
             position: "absolute",

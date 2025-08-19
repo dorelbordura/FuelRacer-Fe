@@ -8,12 +8,14 @@ import MainMenu from './components/MainMenu';
 import config from './config.json';
 import registerToken from "./utils/registerToken";
 import Races from './components/Races';
+import LandingPage from "./components/LandingPage";
 const {BACKEND_URL} = config;
+import './output.css';
 
 function App() {
   const { wallet, hasAccess, setFuel, setStatus, setRacing, racing, setResult, setHasAccess, setWallet } = useGame()
   const headers = useAuthHeader()
-  const currentRunRef = useRef(null); // { raceId, runId }
+  const currentRunRef = useRef(null);
   const [finalTime, setFinalTime] = useState(null);
 
   const finishRace = async () => {
@@ -34,7 +36,7 @@ function App() {
       if (data.fuel) setFuel(data.fuel);
       if (data.message) setStatus(data.message);
       setResult(data)
-      setRacing(false)
+      setTimeout(() => setRacing(false), 3000);
     } catch (e) {
       setStatus(e.message);
 
@@ -45,6 +47,12 @@ function App() {
     setWallet(address);
     setHasAccess(true);
   }
+
+  return (
+    <LandingPage
+      {...{currentRunRef, registerToken, finalTime, finishRace, setFinalTime}}
+    />
+  )
 
   return (
     <div className="scene">
