@@ -57,3 +57,17 @@ html,body,#root{height:100%;background:var(--bg);color:var(--text);font-family:I
   pointer-events:none;mix-blend-mode:overlay;
 }
 .garage{position:relative;z-index:2;padding:24px;max-width:720px;margin:12vh auto;background:rgba(8,10,18,.55);border-radius:20px;box-shadow:0 0 40px rgba(255,0,244,.15)}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotateY(0deg); }
+  50% { transform: translateY(-12px) rotateY(5deg); }
+  100% { transform: translateY(0px) rotateY(0deg); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.neon-glow {
+  text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 30px #00f0ff;
+}

@@ -12,7 +12,13 @@ const carSources = [
   "/cars/car7.webp",
   "/cars/car8.webp",
   "/cars/car9.webp"
-]; // put your car sprite filenames here (must be in public folder or same dir)
+]; 
+
+const playerCars = [
+  "/cars/car1.webp",
+  "/cars/car2.webp",
+  "/cars/car3.webp"
+];
 
 carSources.forEach(src => {
   const img = new Image();
@@ -20,13 +26,13 @@ carSources.forEach(src => {
   obstacleImages.push(img);
 });
 
-const playerImg = new Image();
-playerImg.src = "/cars/car1.webp";
-
-export default function RacingGame({ onFinish, finalTime }) {
+export default function RacingGame({ onFinish, finalTime, selectedCar }) {
   const ref = useRef(null);
   const [finished, setFinished] = useState(false);
   const [started, setStarted] = useState(true);
+
+  const playerImg = new Image();
+  playerImg.src = playerCars[selectedCar];
 
   useEffect(() => {
     let raf;
@@ -204,16 +210,21 @@ export default function RacingGame({ onFinish, finalTime }) {
       } else {
         if (!startTime) startTime = ts;
         const elapsed = (ts - startTime) / 1000;
-        
-        ctx.fillText(`🏁 ${(trackLength - distance).toFixed(0)} m left`, 20, 40);
-        ctx.fillText(`⏱ ${elapsed.toFixed(2)}s`, 20, 70);
-        ctx.fillText(`🚗 Speed: ${speed.toFixed(1)}`, 20, 100);
+        const lineY = H - (trackLength - distance); // vertical position
+        const bannerHeight = 40;
+        const squareSize = 20;
+        const bandBottom = lineY + bannerHeight;
+        const carNoseY = carY; // top edge of the car
+
+
+        if (bandBottom < carNoseY) {
+          ctx.fillText(`🏁 ${(trackLength - distance).toFixed(0)} m left`, 20, 40);
+          ctx.fillText(`⏱ ${elapsed.toFixed(2)}s`, 20, 70);
+          ctx.fillText(`🚗 Speed: ${speed.toFixed(1)}`, 20, 100);
+        }
 
         // draw finish line
         if (trackLength - distance < H) {
-          const lineY = H - (trackLength - distance); // vertical position
-          const bannerHeight = 40;
-          const squareSize = 20;
 
           // checkerboard pattern across full width
           for (let y = 0; y < bannerHeight; y += squareSize) {
@@ -234,14 +245,14 @@ export default function RacingGame({ onFinish, finalTime }) {
           ctx.font = "bold 40px sans-serif";
           ctx.textAlign = "center";
           ctx.fillText("🏁 FINISH 🏁", W / 2, lineY - 20);
-        }
 
-        // Finish condition
-        if (distance >= trackLength) {
-          cancelAnimationFrame(raf);
-          setFinished(true);
-          onFinish(elapsed);
-          return;
+          
+          if (bandBottom >= carNoseY) {
+            cancelAnimationFrame(raf);
+            setFinished(true);
+            onFinish(elapsed);
+            return;
+          }
         }
       }
 
