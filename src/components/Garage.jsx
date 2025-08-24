@@ -8,14 +8,16 @@ export default function Garage({ cars = [], onSelect }) {
   const nextCar = () => setCurrent((c) => (c + 1) % cars.length);
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden text-white">
-      {/* Futuristic background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
+    <div className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden text-white"
+      style={{
+        background: "url('/garage.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        paddingTop: "40px"
+      }}
+    >
       {/* Title */}
-      <h1 className="text-4xl font-bold mb-10 tracking-wider neon-glow" style={{zIndex: '9'}}>🏎 Select Your Car</h1>
+      <h1 className="text-4xl font-bold mb-10 tracking-wider neon-glow" style={{zIndex: '9'}}>Select Your Car</h1>
 
       <div className="relative flex items-center justify-center w-full max-w-4xl">
         {/* Left arrow */}
@@ -28,7 +30,7 @@ export default function Garage({ cars = [], onSelect }) {
 
         {/* Car display */}
         <div className="flex flex-col items-center space-y-8">
-          <div className="relative w-96 h-56 flex items-center justify-center">
+          <div className="relative w-150 h-115 flex items-center justify-center">
             {/* Floating car */}
             <img
               src={cars[current].image}
