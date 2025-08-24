@@ -264,11 +264,12 @@ export default function LandingPage({
         <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-200 font-sans">
             {/* Header */}
             <header className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                <div className="text-xl font-bold tracking-wide text-white" style={{cursor: 'pointer'}} onClick={() => {
+                <div className="text-xl font-bold tracking-wide text-white" style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px'}} onClick={() => {
                     setShowGarage(false);
                     setRacing(false);
                 }}>
-                🚦 Fuel Racer
+                    <img src="/logo.png" alt="Fuel Racer Logo" style={{width: '50px'}} />
+                    Fuel Racer
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
                     {wallet && (
