@@ -15,9 +15,9 @@ const carSources = [
 ]; 
 
 const playerCars = [
-  "/cars/car1.webp",
-  "/cars/car2.webp",
-  "/cars/car3.webp"
+  "/cars/fuelTruck.png",
+  "/cars/miniCart.png",
+  "/cars/car2.webp"
 ];
 
 carSources.forEach(src => {

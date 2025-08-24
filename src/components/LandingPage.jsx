@@ -11,16 +11,16 @@ import Garage from "./Garage";
 
 const cars = [
     {
-        name: 'Lembu',
-        image: '/cars/preview_car1.webp'
+        name: 'Fuel Truck',
+        image: '/cars/fuelTruck_preview.png'
     },
     {
-        name: 'Lembu',
+        name: 'Mini Cart',
+        image: '/cars/miniCart_preview.png'
+    },
+    {
+        name: 'Tractor',
         image: '/cars/preview_car2.webp'
-    },
-    {
-        name: 'Lembu',
-        image: '/cars/preview_car3.png'
     }
 ];
 
@@ -129,6 +129,14 @@ export default function LandingPage({
     const [transitionState, setTransitionState] = useState("idle");
     const [showGarage, setShowGarage] = useState(false);
     const [selectedCar, setSelectedCar] = useState(0);
+    const [pastPage, setPastPage] = useState(1);
+    const [pastPerPage] = useState(5);
+
+    const paginatedRaces = races.slice(
+        (pastPage - 1) * pastPerPage,
+        pastPage * pastPerPage
+    );
+    const totalPages = Math.ceil(races.length / pastPerPage);
 
     // Auto-refresh summary every 5s
     useEffect(() => {
@@ -136,12 +144,8 @@ export default function LandingPage({
         async function load() {
             try {
                 const data = await api(`/races/summary`);
-                // backend may return {active, upcoming} OR {races: [...]} from older version
-                if (data.races) {
-                    const active = data.races.find(r => r.state === "active") || null;
-                    const upcoming = data.races.filter(r => r.state === "upcoming").slice(0,2);
-                    setSummary({ active, upcoming });
-                } else {
+
+                if (data.active || data.upcoming) {
                     setSummary({ active: data.active || null, upcoming: data.upcoming || [] });
                 }
 
@@ -260,7 +264,10 @@ export default function LandingPage({
         <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-200 font-sans">
             {/* Header */}
             <header className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                <div className="text-xl font-bold tracking-wide text-white">
+                <div className="text-xl font-bold tracking-wide text-white" style={{cursor: 'pointer'}} onClick={() => {
+                    setShowGarage(false);
+                    setRacing(false);
+                }}>
                 🚦 Fuel Racer
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
@@ -303,53 +310,70 @@ export default function LandingPage({
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
                     <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
-                    {countdown.active ? (
-                        <div className="space-y-4">
-                            <WrappedButton
-                                onClick={() => setTransitionState("gateClosing")}
-                                className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded"
-                                label="Start Race 🏁"
-                            />
-                            <div className="text-lg font-semibold text-gray-300">
-                                ⏳ Time left:{" "}
-                                <span className="text-white">{countdown.timeToEnd}</span>
+                        {countdown.active ? (
+                            <div className="space-y-4">
+                                <WrappedButton
+                                    onClick={() => setTransitionState("gateClosing")}
+                                    className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded"
+                                    label="Start Race 🏁"
+                                />
+                                <div className="text-lg font-semibold text-gray-300">
+                                    ⏳ Time left:{" "}
+                                    <span className="text-white">{countdown.timeToEnd}</span>
+                                </div>
+                                <LeaderboardModal race={summary.active} open />
                             </div>
-                            <LeaderboardModal race={summary.active} open />
-                        </div>
-                    ) : (
-                        <div className="text-lg font-semibold text-gray-300">
-                        ⏳ Next race in:{" "}
-                        <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="text-lg font-semibold text-gray-300">
+                                ⏳ Next race in:{" "}
+                                <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Past Races */}
                     <div className="w-full max-w-2xl">
-                    <h2 className="text-lg font-semibold mb-3">🏎 Past Races</h2>
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                        {races.map((race, idx) => {
-                            const isExpanded = expandedRace === idx;
-                            return (
-                                <div key={idx} className="border-b border-gray-800">
+                        <h2 className="text-lg font-semibold mb-3">🏎 Past Races</h2>
+                        <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                            {
+                                paginatedRaces.map((race, idx) => {
+                                    const isExpanded = expandedRace === idx + (pastPage - 1) * pastPerPage;
+                                    return (
+                                        <div key={idx} className="border-b border-gray-800">
+                                            <button
+                                                onClick={() =>
+                                                    setExpandedRace(isExpanded ? null : idx + (pastPage - 1) * pastPerPage)
+                                                }
+                                                className="flex justify-between items-center w-full px-4 py-3 text-left hover:bg-gray-800 transition"
+                                            >
+                                                <span>
+                                                    Race #{race.id} - {race.date}
+                                                </span>
+                                                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </button>
+                                            {isExpanded && <LeaderboardModal race={race} open={isExpanded} />}
+                                        </div>
+                                    );
+                                })
+                            }
+                            <div className="flex justify-between px-4 py-2 text-sm text-gray-400">
                                 <button
-                                    onClick={() =>
-                                        setExpandedRace(isExpanded ? null : idx)
-                                    }
-                                    className="flex justify-between items-center w-full px-4 py-3 text-left hover:bg-gray-800 transition"
+                                    disabled={pastPage === 1}
+                                    onClick={() => setPastPage(p => p - 1)}
+                                    className="px-2 py-1 rounded hover:bg-gray-700 disabled:opacity-50"
                                 >
-                                    <span>
-                                    Race #{race.id} - {race.date}
-                                    </span>
-                                    {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    Previous
                                 </button>
-                                {isExpanded && (
-                                    <LeaderboardModal race={race} open={isExpanded} />
-                                )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                <span>Page {pastPage} of {totalPages}</span>
+                                <button
+                                    disabled={pastPage === totalPages}
+                                    onClick={() => setPastPage(p => p + 1)}
+                                    className="px-2 py-1 rounded hover:bg-gray-700 disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </main>
             )}
