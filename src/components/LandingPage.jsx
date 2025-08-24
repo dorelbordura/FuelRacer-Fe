@@ -4,8 +4,25 @@ import { api, useFuelRacerCountdown } from "./Races";
 import { useGame } from "../store";
 import { connectMetaMask } from "../utils/connectMetaMask";
 import Notification from "./Notification";
-import { hasEnoughFuelTokens } from "../utils/checkFuelTokenBalance";
+import { hasEnoughFuelTokens, checkTokenBalance } from "../utils/checkFuelTokenBalance";
 import CanvasGame from './CanvasGame';
+import GateOverlay from './GateOverlay';
+import Garage from "./Garage";
+
+const cars = [
+    {
+        name: 'Lembu',
+        image: '/cars/preview_car1.webp'
+    },
+    {
+        name: 'Lembu',
+        image: '/cars/preview_car2.webp'
+    },
+    {
+        name: 'Lembu',
+        image: '/cars/preview_car3.png'
+    }
+];
 
 function toDate(ts) {
   // supports Firestore Timestamp-like objects from backend { _seconds, _nanoseconds } OR { seconds, nanoseconds }
@@ -61,8 +78,6 @@ function LeaderboardModal({ race, open }) {
   }, [open, race?.id]);
 
   if (!open || !race) return null;
-//   const start = toDate(race.startAt);
-//   const end = toDate(race.endAt);
 
   return (
     <div className="bg-gray-800 px-6 py-4">
@@ -88,56 +103,6 @@ function LeaderboardModal({ race, open }) {
         </ol>
     </div>
   )
-
-//   return (
-//     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
-//       <div className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-//         <Card>
-//           <div className="flex items-center justify-between mb-4">
-//             <h3 className="text-lg font-semibold">Leaderboard — {formatTime(start)} UTC</h3>
-//             <button className="px-3 py-1 rounded-xl border text-sm" onClick={onClose}>Close</button>
-//           </div>
-//           <div className="overflow-x-auto">
-//             <table className="w-full text-sm">
-//               <thead>
-//                 <tr className="text-left border-b border-zinc-200 dark:border-zinc-800">
-//                   <th className="py-2 pr-2">#</th>
-//                   <th className="py-2 pr-2">Player</th>
-//                   <th className="py-2 pr-2">Best Time</th>
-//                   <th className="py-2 pr-2">Attempts</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {rows.length === 0 && (
-//                   <tr>
-//                     <td colSpan={4} className="py-6 text-center text-zinc-500">No results yet.</td>
-//                   </tr>
-//                 )}
-//                 {rows.map((r, i) => (
-//                   <tr key={r.id || i} className="border-b border-zinc-100 dark:border-zinc-800/50">
-//                     <td className="py-2 pr-2 font-medium">{r.rank || i + 1}</td>
-//                     <td className="py-2 pr-2 font-mono text-xs break-all">{r.id || r.playerId || r.playerAddress}</td>
-//                     <td className="py-2 pr-2">{msToTime(r.bestTime)}</td>
-//                     <td className="py-2 pr-2">{r.attempts ?? "—"}</td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         </Card>
-//       </div>
-//     </div>
-//   );
-}
-
-function HUD() {
-  const { fuel } = useGame()
-  return (
-    <div className="hud">
-      <div className="fuel-gauge"><span className="fuel-dot" /> Fuel Units: {fuel}</div>
-      {/* <div>Mode: Dark Sci‑Fi</div> */}
-    </div>
-  )
 }
 
 const WrappedButton = ({onClick, className, label}) => {
@@ -153,16 +118,17 @@ export default function LandingPage({
   currentRunRef,
   registerToken,
   finalTime,
-  finishRace,
   setFinalTime
 }) {
     const [expandedRace, setExpandedRace] = useState(null);
     const [summary, setSummary] = useState({ active: null, upcoming: [] });
     const [races, setRaces] = useState([]);
     const countdown = useFuelRacerCountdown(summary);
-    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel} = useGame();
+    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel, setResult} = useGame();
     const [notification, setNotification] = useState(null);
-    const [ok, setOk] = useState(false);
+    const [transitionState, setTransitionState] = useState("idle");
+    const [showGarage, setShowGarage] = useState(false);
+    const [selectedCar, setSelectedCar] = useState(0);
 
     // Auto-refresh summary every 5s
     useEffect(() => {
@@ -187,7 +153,6 @@ export default function LandingPage({
         }
         load();
         t = setInterval(load, 5000);
-        // getUserFuel();
         return () => clearInterval(t);
     }, []);
 
@@ -209,11 +174,9 @@ export default function LandingPage({
           setStatus("checking");
           const res = await hasEnoughFuelTokens(provider, address);
           if (res.ok) {
-            setOk(true);
             setStatus("ready");
             showNotification({message: "Access granted. Let's race!", type: 'success'})
           } else {
-            setOk(false);
             setStatus("denied");
             showNotification({message: "Not enough Fuel Tokens (need ≥ 10,000,000).", type: 'warning'})
           }
@@ -225,121 +188,202 @@ export default function LandingPage({
 
     async function startRun(race) {
         try {
-            setStatus('Starting race...')
-            const data = await api(`/runs/start`, { method: "POST", body: JSON.stringify({ raceId: race.id }) });
-            currentRunRef.current = { raceId: race.id, runId: data.runId };
+            const res = await checkTokenBalance(wallet);
+
+            if (res.ok) {
+                setStatus('Starting race...')
+                const data = await api(`/runs/start`, { method: "POST", body: JSON.stringify({ raceId: race.id }) });
+                currentRunRef.current = { raceId: race.id, runId: data.runId };
+            
+                if (!data.ok) {
+                    showNotification({message: data.message || 'Not enough fuel', type: 'warning'});
+                    return setStatus(data.message || 'Not enough fuel')
+                }
         
-            if (!data.ok) {
-                showNotification({message: data.message || 'Not enough fuel', type: 'warning'});
-                return setStatus(data.message || 'Not enough fuel')
+                setFuel(data.fuel)
+                setRacing(true)
+                setFinalTime(0);
+            } else {
+                throw new Error("Not enough Fuel Tokens (need ≥ 10,000,000).")
             }
-    
-            setFuel(data.fuel)
-            setRacing(true)
-            setFinalTime(0);
         } catch (e) {
             showNotification({message: e.message || 'Not enough fuel', type: 'error'});
             setStatus(e.message || 'Not enough fuel')
         }
     }
 
+    const finishRace = async () => {
+        setStatus('Finishing...')
+        const curr = currentRunRef.current;
+        if (!curr) return setStatus("No run started");
+
+        try {
+            const data = await api(`/runs/finish`, { method: "POST", body: JSON.stringify(curr) });
+
+            if (data.elapsedMs) setFinalTime(data.elapsedMs / 1000);
+
+            if (data.fuel) setFuel(data.fuel);
+            if (data.message) setStatus(data.message);
+            setResult(data)
+            setTimeout(() => setRacing(false), 3000);
+            setShowGarage(false);
+        } catch (e) {
+            showNotification({message: e.message, type: 'error'});
+            setStatus(e.message);
+        }
+    }
+
     const showNotification = (message) => {
         setNotification(message);
 
-        // Hide after 5 seconds
-        setTimeout(() => setNotification(null), 5000);
+        // Hide after 2.5 seconds
+        setTimeout(() => setNotification(null), 2500);
     };
+
+    const claimDaily = async () => {
+        setStatus('Claiming daily...')
+        const data = await api(`/fuel/claimDaily`, { method: "POST" });
+        setFuel(data.fuel)
+        showNotification({message: data.message || 'Claimed'})
+    }
+
+    // Optional UX enhancement: do token transfer via contract call and send txHash here.
+    const buyFuel = async (amount = 1, txHash = '') => {
+        setStatus('Verifying purchase...')
+        const data = await api(`/fuel/purchase`, { method: "POST", body: JSON.stringify({ amount, txHash }) });
+        if (data.error) { setStatus(data.error); return }
+        setFuel(data.fuel)
+        setStatus('Purchased fuel')
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-200 font-sans">
-        {/* Header */}
-        <header className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-800">
-            <div className="text-xl font-bold tracking-wide text-white">
-            🚦 Fuel Racer
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
-                <div className="fuel-gauge"><span className="fuel-dot" /> Fuel Units: {fuel}</div>
-                <WrappedButton
-                    onClick={handleConnect}
-                    className="bg-green-600 text-white shadow-md px-4 py-2 rounded"
-                    label={wallet
-                        ? wallet.slice(0, 6) + "..." + wallet.slice(-4)
-                        : "Connect Wallet"
-                    }
+            {/* Header */}
+            <header className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-800">
+                <div className="text-xl font-bold tracking-wide text-white">
+                🚦 Fuel Racer
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
+                    {wallet && (
+                        <>
+                            <WrappedButton
+                                onClick={claimDaily}
+                                className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+                                label="Claim Daily Fuel"
+                            />
+                            <WrappedButton
+                                onClick={buyFuel}
+                                className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+                                label="Buy fuel"
+                            />
+                            <div className="fuel-gauge"><span className="fuel-dot" /> Fuel Units: {fuel}</div>
+                        </>
+                    )}
+                    <WrappedButton
+                        onClick={!wallet ? handleConnect : () => null}
+                        className="bg-green-600 text-white shadow-md px-4 py-2 rounded"
+                        label={wallet
+                            ? wallet.slice(0, 6) + "..." + wallet.slice(-4)
+                            : "Connect Wallet"
+                        }
+                    />
+                </div>
+            </header>
+
+            {notification && (
+                <Notification
+                    message={notification.message}
+                    type={notification.type}
                 />
-            </div>
-        </header>
+            )}
 
-        {notification && (
-            <Notification
-            message={notification.message}
-            type={notification.type}
-            />
-        )}
-
-        {/* Main Body */}
-        {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} />}
-        {!racing && (
-            <main className="flex-1 flex flex-col items-center p-6 space-y-8">
-                {/* Countdown / Race Status */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
-                {countdown.active ? (
-                    <div className="space-y-4">
-                        <WrappedButton
-                            onClick={() => startRun(summary.active)}
-                            className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded"
-                            label="Start Race 🏁"
-                        />
+            {/* Main Body */}
+            {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} />}
+            {!racing && !showGarage && (
+                <main className="flex-1 flex flex-col items-center p-6 space-y-8">
+                    {/* Countdown / Race Status */}
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
+                    {countdown.active ? (
+                        <div className="space-y-4">
+                            <WrappedButton
+                                onClick={() => setTransitionState("gateClosing")}
+                                className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded"
+                                label="Start Race 🏁"
+                            />
+                            <div className="text-lg font-semibold text-gray-300">
+                                ⏳ Time left:{" "}
+                                <span className="text-white">{countdown.timeToEnd}</span>
+                            </div>
+                            <LeaderboardModal race={summary.active} open />
+                        </div>
+                    ) : (
                         <div className="text-lg font-semibold text-gray-300">
-                            ⏳ Time left:{" "}
-                            <span className="text-white">{countdown.timeToEnd}</span>
+                        ⏳ Next race in:{" "}
+                        <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
                         </div>
-                        <LeaderboardModal race={summary.active} open />
+                    )}
                     </div>
-                ) : (
-                    <div className="text-lg font-semibold text-gray-300">
-                    ⏳ Next race in:{" "}
-                    <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
+
+                    {/* Past Races */}
+                    <div className="w-full max-w-2xl">
+                    <h2 className="text-lg font-semibold mb-3">🏎 Past Races</h2>
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                        {races.map((race, idx) => {
+                            const isExpanded = expandedRace === idx;
+                            return (
+                                <div key={idx} className="border-b border-gray-800">
+                                <button
+                                    onClick={() =>
+                                        setExpandedRace(isExpanded ? null : idx)
+                                    }
+                                    className="flex justify-between items-center w-full px-4 py-3 text-left hover:bg-gray-800 transition"
+                                >
+                                    <span>
+                                    Race #{race.id} - {race.date}
+                                    </span>
+                                    {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                </button>
+                                {isExpanded && (
+                                    <LeaderboardModal race={race} open={isExpanded} />
+                                )}
+                                </div>
+                            );
+                        })}
                     </div>
-                )}
-                </div>
+                    </div>
+                </main>
+            )}
 
-                {/* Past Races */}
-                <div className="w-full max-w-2xl">
-                <h2 className="text-lg font-semibold mb-3">🏎 Past Races</h2>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    {races.map((race, idx) => {
-                    const isExpanded = expandedRace === idx;
-                    return (
-                        <div key={idx} className="border-b border-gray-800">
-                        <button
-                            onClick={() =>
-                            setExpandedRace(isExpanded ? null : idx)
-                            }
-                            className="flex justify-between items-center w-full px-4 py-3 text-left hover:bg-gray-800 transition"
-                        >
-                            <span>
-                            Race #{race.id} - {race.date}
-                            </span>
-                            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                        </button>
-                        {isExpanded && (
-                            <LeaderboardModal race={race} open={isExpanded} />
-                        )}
-                        </div>
-                    );
-                    })}
-                </div>
-                </div>
-            </main>
+            {!racing && showGarage && (
+                <Garage
+                    cars={cars}
+                    onSelect={(car) => {
+                        setSelectedCar(car);
+                        startRun(summary.active);
+                    }}
+                />
+            )}
 
-        )}
+            {transitionState !== "idle" && (
+                <GateOverlay
+                    state={transitionState}
+                    onFinish={(phase) => {
+                        if (phase === "closed") {
+                            setTimeout(() => {
+                                setShowGarage(true);
+                                // switch UI behind the gate to garage
+                                setTransitionState("gateOpening"); 
+                            }, 500);
+                        }
+                        if (phase === "opened") setTransitionState("idle");
+                    }}
+                />
+            )}
 
-
-        {/* Footer */}
-        <footer className="w-full text-center py-4 border-t border-gray-800 text-gray-500 text-sm">
-            © 2025 Fuel Racer
-        </footer>
+            {/* Footer */}
+            <footer className="w-full text-center py-4 border-t border-gray-800 text-gray-500 text-sm">
+                © 2025 Fuel Racer
+            </footer>
         </div>
     );
 }
