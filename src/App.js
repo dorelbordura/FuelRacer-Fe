@@ -9,6 +9,7 @@ const sounds = {
   crash: new Audio("/sounds/car_crash.mp3"),
   spike: new Audio("/sounds/fart.mp3"),
   soundtrack: new Audio("/sounds/backgroundMusic.mp3"),
+  gates: new Audio("/sounds/gates.mp3"),
 };
 
 sounds.soundtrack.loop = true;
