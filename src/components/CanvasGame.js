@@ -17,8 +17,19 @@ const carSources = [
 const playerCars = [
   "/cars/fuelTruck.png",
   "/cars/miniCart.png",
-  "/cars/car2.webp"
+  "/cars/car2.webp",
+  "/cars/van.png",
+  "/cars/bus.png"
 ];
+
+const spikeImg = new Image();
+spikeImg.src = "/spikes.png";
+
+const crashImg = new Image();
+crashImg.src = "/crash.png";
+
+const crashSound = new Audio("/car_crash.mp3");
+const fartSound = new Audio("/fart.mp3");
 
 carSources.forEach(src => {
   const img = new Image();
@@ -53,7 +64,8 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
     const trackLength = 25000; // units
     let distance = 0;
     let speed = 0;
-    let maxSpeed = 10;
+    const defaultMaxSpeed = 10; // keep this fixed value
+    let maxSpeed = defaultMaxSpeed;
     let acceleration = 0.3;
     let deceleration = 0.2;
     const baseSpeed = 5;
@@ -67,6 +79,8 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
     let obstacles = [];
     let laneOffset = 0;
     let startTime;
+    let crashes = [];
+    let spikePenalty = 0;
 
     function spawnObstacle() {
       const w = 100;
@@ -76,7 +90,7 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       let y = -h;
       let tries = 0;
       let valid = false;
-      let x, chosenImg;
+      let x, chosenImg, type;
 
       while (!valid && tries < 30) {
         // pick a random lane index (0..N-1)
@@ -100,13 +114,16 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       }
 
       if (valid) {
-        chosenImg = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
-        obstacles.push({ x, y, w, h, img: chosenImg });
+        if (Math.random() < 0.7) {
+          chosenImg = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
+          type = "car";
+        } else {
+          chosenImg = spikeImg;
+          type = "spike";
+        }
+        obstacles.push({ x, y, w, h, img: chosenImg, type, hit: false });
       }
     }
-
-
-
 
     function drawCar(x, y) {
       if (playerImg.complete) {
@@ -190,7 +207,37 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
           carY < o.y + o.h &&
           carY + carHeight > o.y
         ) {
-          speed = Math.max(speed * 0.5, 2); // penalty
+
+          if (!o.hit) {   // only trigger once
+            o.hit = true;
+            if (o.type === "car") {
+              speed = Math.max(speed * 0.5, 2); // slow down
+  
+              // play sound
+              crashSound.currentTime = 0;
+              crashSound.play();
+  
+              // add crash animation
+              crashes.push({
+                x: carX + carWidth / 2,
+                y: carY,
+                life: 30 // frames
+              });
+            } else if (o.type === "spike") {
+              speed = Math.max(speed * 0.2, 1); // heavy penalty
+              maxSpeed = 5;              // penalty for 2s
+              spikePenalty = 2000;
+
+              fartSound.currentTime = 0;
+              fartSound.play();
+
+              // restore after 2 seconds
+              setTimeout(() => {
+                maxSpeed = defaultMaxSpeed;
+                spikePenalty = 0;
+              }, 2000);
+            }
+          }
         }
       });
       obstacles = obstacles.filter((o) => o.y < H);
@@ -202,6 +249,21 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       ctx.textBaseline = "top";
       ctx.fillStyle = "white";
       ctx.font = "20px sans-serif";
+
+      // draw crashes
+      crashes.forEach((c) => {
+        if (crashImg.complete) {
+          ctx.drawImage(crashImg, c.x - 50, c.y - 50, 100, 100);
+        } else {
+          // fallback: draw red/orange circle
+          ctx.fillStyle = "orange";
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 40, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        c.life--;
+      });
+      crashes = crashes.filter(c => c.life > 0);
       
       if (!started) {
         ctx.fillStyle = "yellow";
@@ -221,6 +283,13 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
           ctx.fillText(`🏁 ${(trackLength - distance).toFixed(0)} m left`, 20, 40);
           ctx.fillText(`⏱ ${elapsed.toFixed(2)}s`, 20, 70);
           ctx.fillText(`🚗 Speed: ${speed.toFixed(1)}`, 20, 100);
+        }
+
+        if (spikePenalty > 0) {
+          ctx.fillStyle = "red";
+          ctx.font = "bold 28px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("⚠️ Spike hit! Speed reduced!", W / 2, 100);
         }
 
         // draw finish line

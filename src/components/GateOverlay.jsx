@@ -1,6 +1,8 @@
 // GateOverlay.jsx
 import React, { useEffect, useState } from "react";
 
+const gateClose = new Audio("/gates.mp3");
+
 export default function GateOverlay({ state, onFinish }) {
     const [animate, setAnimate] = useState(false);
     // console.log({state});
@@ -8,6 +10,8 @@ export default function GateOverlay({ state, onFinish }) {
         if (state === "gateClosing") {
             requestAnimationFrame(() => setAnimate(true));
             const timer = setTimeout(() => onFinish("closed"), 1500); // closing duration
+            gateClose.currentTime = 0;
+            gateClose.play();
             return () => clearTimeout(timer);
         }
         if (state === "gateOpening") {
@@ -16,15 +20,6 @@ export default function GateOverlay({ state, onFinish }) {
             return () => clearTimeout(timer);
         }
     }, [state]);
-
-    const handleTransitionEnd = (side) => {
-        if (state === "gateClosing" && side === "left") {
-            onFinish("closed");
-        }
-        if (state === "gateOpening" && side === "left") {
-            onFinish("opened");
-        }
-    };
 
     return (
         <div className="fixed inset-0 flex z-50 pointer-events-none overflow-hidden">

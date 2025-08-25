@@ -3,6 +3,7 @@ import "./components/styles.css";
 import registerToken from "./utils/registerToken";
 import LandingPage from "./components/LandingPage";
 import './output.css';
+import LoadingSpinner from "./components/LoadingSpinner";
 
 function App() {
   const currentRunRef = useRef(null);
@@ -39,7 +40,11 @@ function App() {
           "/garage.jpg",
           '/gate_left.png',
           '/gate_right.png',
-          '/logo.png'
+          '/logo.png',
+          '/cars/van.png',
+          '/cars/van_preview.png',
+          '/cars/bus.png',
+          '/cars/bus_preview.png'
         ];
         await Promise.all(images.map(preloadImage));
 
@@ -65,12 +70,7 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen bg-black text-white">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-500"></div>
-          <p className="mt-4 text-lg font-bold">Loading Fuel Racer...</p>
-        </div>
-      </div>
+      <LoadingSpinner />
     );
   }
 
