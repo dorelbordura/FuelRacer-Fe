@@ -32,7 +32,7 @@ const cars = [
     }
 ];
 
-const soundtrack = new Audio("/backgroundMusic.mp3");
+const soundtrack = new Audio("/sounds/backgroundMusic.mp3");
 soundtrack.loop = true;
 soundtrack.volume = 0.4;
 

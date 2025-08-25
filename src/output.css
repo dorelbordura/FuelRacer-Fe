@@ -1014,6 +1014,30 @@ html,body,#root {
 .neon-glow {
   text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 30px #00f0ff;
 }
+.loading-spinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #111;
+  color: #f44e36;
+  font-size: 1.2rem;
+  z-index: 9999;
+}
+.spinner {
+  border: 5px solid #333;
+  border-top: 5px solid #f44e36;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
 @property --tw-translate-x {
   syntax: "*";
   inherits: false;
@@ -1295,6 +1319,11 @@ html,body,#root {
   syntax: "*";
   inherits: false;
   initial-value: 1;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {

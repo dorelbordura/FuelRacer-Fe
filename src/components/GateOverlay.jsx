@@ -1,7 +1,7 @@
 // GateOverlay.jsx
 import React, { useEffect, useState } from "react";
 
-const gateClose = new Audio("/gates.mp3");
+const gateClose = new Audio("/sounds/gates.mp3");
 
 export default function GateOverlay({ state, onFinish }) {
     const [animate, setAnimate] = useState(false);

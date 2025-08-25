@@ -28,8 +28,8 @@ spikeImg.src = "/spikes.png";
 const crashImg = new Image();
 crashImg.src = "/crash.png";
 
-const crashSound = new Audio("/car_crash.mp3");
-const fartSound = new Audio("/fart.mp3");
+const crashSound = new Audio("/sounds/car_crash.mp3");
+const fartSound = new Audio("/sounds/fart.mp3");
 
 carSources.forEach(src => {
   const img = new Image();
