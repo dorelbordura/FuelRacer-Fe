@@ -21,8 +21,20 @@ const cars = [
     {
         name: 'Tractor',
         image: '/cars/preview_car2.webp'
+    },
+    {
+        name: 'Fuel Van',
+        image: '/cars/van_preview.png'
+    },
+    {
+        name: 'Fuel Bus',
+        image: '/cars/bus_preview.png'
     }
 ];
+
+const soundtrack = new Audio("/backgroundMusic.mp3");
+soundtrack.loop = true;
+soundtrack.volume = 0.4;
 
 function toDate(ts) {
   // supports Firestore Timestamp-like objects from backend { _seconds, _nanoseconds } OR { seconds, nanoseconds }
@@ -207,6 +219,8 @@ export default function LandingPage({
                 setFuel(data.fuel)
                 setRacing(true)
                 setFinalTime(0);
+                soundtrack.currentTime = 0;
+                soundtrack.play();
             } else {
                 throw new Error("Not enough Fuel Tokens (need ≥ 10,000,000).")
             }
@@ -231,6 +245,8 @@ export default function LandingPage({
             setResult(data)
             setTimeout(() => setRacing(false), 3000);
             setShowGarage(false);
+            soundtrack.pause();
+            soundtrack.currentTime = 0;
         } catch (e) {
             showNotification({message: e.message, type: 'error'});
             setStatus(e.message);
