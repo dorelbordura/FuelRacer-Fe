@@ -5,6 +5,15 @@ import LandingPage from "./components/LandingPage";
 import './output.css';
 import LoadingSpinner from "./components/LoadingSpinner";
 
+const sounds = {
+  crash: new Audio("/sounds/car_crash.mp3"),
+  spike: new Audio("/sounds/fart.mp3"),
+  soundtrack: new Audio("/sounds/backgroundMusic.mp3"),
+};
+
+sounds.soundtrack.loop = true;
+sounds.soundtrack.volume = 0.4;
+
 function App() {
   const currentRunRef = useRef(null);
   const [finalTime, setFinalTime] = useState(null);
@@ -48,6 +57,16 @@ function App() {
         ];
         await Promise.all(images.map(preloadImage));
 
+        const promises = Object.values(sounds).map(
+          (sound) =>
+            new Promise((resolve) => {
+              sound.addEventListener("canplaythrough", resolve, { once: true });
+              sound.load(); // force preload
+            })
+        );
+
+        await Promise.all(promises);
+
         // 2. Fetch initial Firestore data
         const racesSnap = await getDocs(collection(db, "races"));
         const racesData = racesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -64,6 +83,8 @@ function App() {
         setIsLoading(false); // fail gracefully
       }
     };
+
+
 
     loadResources();
   }, []);
