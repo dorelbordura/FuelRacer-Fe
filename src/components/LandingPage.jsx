@@ -52,10 +52,10 @@ function formatTime(dt) {
 
 const Button = ({ children, onClick, className }) => (
     <button
-    onClick={onClick}
-    className={`px-4 py-2 rounded-xl font-semibold transition ${className}`}
+        onClick={onClick}
+        className={`px-4 py-2 rounded-xl font-semibold transition ${className}`}
     >
-    {children}
+        {children}
     </button>
 );
 
@@ -91,10 +91,45 @@ function LeaderboardModal({ race, open }) {
 
   if (!open || !race) return null;
 
+//   const newRows = [
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '21'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '21'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '21'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '2100'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '2100'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '2100'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '21'
+//     },
+//     {
+//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
+//         bestTime: '21'
+//     }
+//   ]
+
   return (
-    <div className="bg-gray-800 px-6 py-4">
-        <h3 className="font-semibold mb-2">🏆 Top 10 Scores</h3>
-        <ol className="space-y-1 text-sm">
+    <div className="bg-gray-800 px-6 py-4" style={{height: '100%'}}>
+        <h3 className="font-semibold mb-2" style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>🏆 Top 10 Scores</h3>
+        <ol className="space-y-1 text-sm" style={{width: '100%', height: '100%'}}>
         {rows.map((entry, i) => {
             const isCurrentUser =
               wallet &&
@@ -102,7 +137,7 @@ function LeaderboardModal({ race, open }) {
             return (
                 <li key={i} className={`flex justify-between py-2`}>
                 <span>
-                    {entry.rank || i + 1}. <span className={`${isCurrentUser ? "text-yellow-400" : "text-gray-200"}`}>{isCurrentUser ? "You" : `#${i + 1} ${entry.playerAddress}`}</span>
+                    <span className={`${isCurrentUser ? "text-yellow-400" : "text-gray-200"}`}>{isCurrentUser ? `#${i + 1} You` : `#${i + 1} ${entry.playerAddress}`}</span>
                 </span>
                 
                 <span className="text-green-400">
@@ -111,7 +146,7 @@ function LeaderboardModal({ race, open }) {
                 </li>
             );
         })}
-        {!rows.length ? 'No score registered' : ""}
+        {!rows.length ? <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>No score registered</div> : ""}
         </ol>
     </div>
   )
@@ -173,7 +208,9 @@ export default function LandingPage({
     }, []);
 
     useEffect(() => {
-        getUserFuel(wallet);
+        if (wallet) {
+            getUserFuel(wallet);
+        }
     }, [wallet]);
 
     const getUserFuel = async (address) => {
@@ -326,7 +363,33 @@ export default function LandingPage({
             {!racing && !showGarage && (
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
+                    {
+                        countdown.active ? (
+                            <div className="active-race-container bg-gray-900 rounded-2xl shadow-lg" style={{overflow: 'hidden'}}>
+                                <div className="countdown-container">
+                                    <div className="text-lg font-semibold text-gray-300 timeToEnd">
+                                        ⏳ Time left:{" "}
+                                        <span className="text-white">{countdown.timeToEnd}</span>
+                                    </div>
+                                    <WrappedButton
+                                        onClick={() => setTransitionState("gateClosing")}
+                                        className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded startRaceButton"
+                                        label="Start Race 🏁"
+                                    />
+                                </div>
+                                <div className="leaderboard-container">
+                                    <LeaderboardModal race={summary.active} open isActiveRace />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-lg font-semibold text-gray-300">
+                                ⏳ Next race in:{" "}
+                                <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
+                            </div>
+                        )
+                    }
+                    
+                    {/* <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
                         {countdown.active ? (
                             <div className="space-y-4">
                                 <WrappedButton
@@ -346,11 +409,11 @@ export default function LandingPage({
                                 <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Past Races */}
                     <div className="w-full max-w-2xl">
-                        <h2 className="text-lg font-semibold mb-3">🏎 Past Races</h2>
+                        <h2 className="text-lg font-semibold mb-3">Past Races</h2>
                         <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
                             {
                                 paginatedRaces.map((race, idx) => {

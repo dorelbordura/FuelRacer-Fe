@@ -291,6 +291,9 @@
   .grid {
     display: grid;
   }
+  .hidden {
+    display: none;
+  }
   .inline-block {
     display: inline-block;
   }
@@ -1037,6 +1040,30 @@ html,body,#root {
   height: 60px;
   animation: spin 1s linear infinite;
   margin-bottom: 12px;
+}
+.active-race-container {
+  display: flex;
+  width: 68vh;
+  min-height: 43vh;
+}
+.countdown-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+.leaderboard-container {
+  flex: 2;
+}
+.timeToEnd {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.startRaceButton {
+  margin-bottom: 50px;
 }
 @property --tw-translate-x {
   syntax: "*";

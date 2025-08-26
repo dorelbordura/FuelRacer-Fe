@@ -73,9 +73,6 @@ function App() {
         const racesData = racesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setRaces(racesData);
 
-        // Example: preload user garage (optional)
-        // const garageSnap = await getDocs(collection(db, "garage"));
-        // setGarage(garageSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
         // ✅ Everything ready
         setIsLoading(false);
