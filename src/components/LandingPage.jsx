@@ -383,36 +383,24 @@ export default function LandingPage({
                             </div>
                         ) : (
                             <div className="text-lg font-semibold text-gray-300">
-                                ⏳ Next race in:{" "}
-                                <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
+                                {countdown.timeToStart ? (
+                                    <>
+                                        ⏳ Next race in:{" "}
+                                        <span className="text-white">{countdown.timeToStart}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        ⏳ Next race:{" "}
+                                        <span className="text-white">{"Tomorrow at 13:00 UTC"}</span>
+                                    </>
+                                )}
+                                
                             </div>
                         )
                     }
-                    
-                    {/* <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg w-full max-w-xl p-6 text-center">
-                        {countdown.active ? (
-                            <div className="space-y-4">
-                                <WrappedButton
-                                    onClick={() => setTransitionState("gateClosing")}
-                                    className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded"
-                                    label="Start Race 🏁"
-                                />
-                                <div className="text-lg font-semibold text-gray-300">
-                                    ⏳ Time left:{" "}
-                                    <span className="text-white">{countdown.timeToEnd}</span>
-                                </div>
-                                <LeaderboardModal race={summary.active} open />
-                            </div>
-                        ) : (
-                            <div className="text-lg font-semibold text-gray-300">
-                                ⏳ Next race in:{" "}
-                                <span className="text-white">{countdown.timeToStart || "Tomorrow at 13:00 UTC"}</span>
-                            </div>
-                        )}
-                    </div> */}
 
                     {/* Past Races */}
-                    <div className="w-full max-w-2xl">
+                    <div style={{width: '100vh'}}>
                         <h2 className="text-lg font-semibold mb-3">Past Races</h2>
                         <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
                             {
