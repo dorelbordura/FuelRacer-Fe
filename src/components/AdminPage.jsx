@@ -44,13 +44,14 @@ export default function AdminPage({ token }) {
             )}
 
             {/* Search & Refresh */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
+            <div className="flex flex-row md:flex-row justify-between items-center mb-6 gap-3">
                 <input
                     type="text"
                     placeholder="🔍 Search by address..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     className="border border-gray-300 px-4 py-2 rounded-lg w-full md:w-1/2 shadow-sm focus:ring-2 focus:ring-blue-400"
+                    style={{maxWidth: '50vh'}}
                 />
                 <button
                     onClick={fetchPlayers}
