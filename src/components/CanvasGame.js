@@ -211,7 +211,7 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
           if (!o.hit) {   // only trigger once
             o.hit = true;
             if (o.type === "car") {
-              speed = Math.max(speed * 0.5, 2); // slow down
+              speed = Math.max(speed * 0.3, 2); // slow down
   
               // play sound
               crashSound.currentTime = 0;
