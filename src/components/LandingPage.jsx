@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { api, useFuelRacerCountdown } from "./Races";
+import { api, useFuelRacerCountdown, parseJwt } from "./Races";
 import { useGame } from "../store";
 import { connectMetaMask } from "../utils/connectMetaMask";
 import Notification from "./Notification";
@@ -8,6 +8,7 @@ import { hasEnoughFuelTokens, checkTokenBalance } from "../utils/checkFuelTokenB
 import CanvasGame from './CanvasGame';
 import GateOverlay from './GateOverlay';
 import Garage from "./Garage";
+import AdminPage from "./AdminPage";
 
 const cars = [
     {
@@ -54,6 +55,7 @@ const Button = ({ children, onClick, className }) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 rounded-xl font-semibold transition ${className}`}
+        style={{cursor: 'pointer'}}
     >
         {children}
     </button>
@@ -90,41 +92,6 @@ function LeaderboardModal({ race, open }) {
   }, [open, race?.id]);
 
   if (!open || !race) return null;
-
-//   const newRows = [
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '21'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '21'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '21'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '2100'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '2100'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '2100'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '21'
-//     },
-//     {
-//         playerAddress: '0x80bf963f38f73538c3773f3f46fd924a91e32e68',
-//         bestTime: '21'
-//     }
-//   ]
 
   return (
     <div className="bg-gray-800 px-6 py-4" style={{height: '100%'}}>
@@ -178,6 +145,9 @@ export default function LandingPage({
     const [selectedCar, setSelectedCar] = useState(0);
     const [pastPage, setPastPage] = useState(1);
     const [pastPerPage] = useState(5);
+    const [showAdmin, setShowAdmin] = useState(false);
+    const token = localStorage.getItem("fr_jwt");
+    const tokenPayload = parseJwt(token);
 
     const paginatedRaces = races.slice(
         (pastPage - 1) * pastPerPage,
@@ -215,7 +185,7 @@ export default function LandingPage({
 
     const getUserFuel = async (address) => {
         const data = await api(`/player/me`, { method: "GET", user: JSON.stringify({ address }) });
-        setFuel(data.fuel)
+        setFuel(data.fuel);
     };
 
     const handleConnect = async () => {
@@ -320,6 +290,7 @@ export default function LandingPage({
                 <div className="text-xl font-bold tracking-wide text-white" style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px'}} onClick={() => {
                     setShowGarage(false);
                     setRacing(false);
+                    setShowAdmin(false);
                 }}>
                     <img src="/logo.png" alt="Fuel Racer Logo" style={{width: '50px'}} />
                     Fuel Racer
@@ -327,6 +298,17 @@ export default function LandingPage({
                 <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
                     {wallet && (
                         <>
+                            {tokenPayload?.isAdmin && (
+                                <WrappedButton
+                                    onClick={() => {
+                                        setShowGarage(false);
+                                        setRacing(false);
+                                        setShowAdmin(true);
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-md px-4 py-2 rounded"
+                                    label="Admin"
+                                />
+                            )}
                             <WrappedButton
                                 onClick={claimDaily}
                                 className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
@@ -360,7 +342,7 @@ export default function LandingPage({
 
             {/* Main Body */}
             {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} />}
-            {!racing && !showGarage && (
+            {!racing && !showGarage && !showAdmin && (
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
                     {
@@ -454,6 +436,10 @@ export default function LandingPage({
                         startRun(summary.active);
                     }}
                 />
+            )}
+
+            {!racing && !showGarage && showAdmin && (
+                <AdminPage token={tokenPayload} />
             )}
 
             {transitionState !== "idle" && (

@@ -68,11 +68,6 @@ function App() {
 
         await Promise.all(promises);
 
-        // 2. Fetch initial Firestore data
-        const racesSnap = await getDocs(collection(db, "races"));
-        const racesData = racesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setRaces(racesData);
-
 
         // ✅ Everything ready
         setIsLoading(false);
@@ -82,8 +77,6 @@ function App() {
       }
     };
 
-
-
     loadResources();
   }, []);
 
@@ -92,7 +85,6 @@ function App() {
       <LoadingSpinner />
     );
   }
-
 
   return (
     <LandingPage
