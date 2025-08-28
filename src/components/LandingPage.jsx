@@ -101,10 +101,11 @@ function LeaderboardModal({ race, open }) {
             const isCurrentUser =
               wallet &&
               entry.playerAddress?.toLowerCase() === wallet.toLowerCase();
+              const playerAddress = entry.playerAddress.slice(0, 6) + "..." + entry.playerAddress.slice(-4)
             return (
                 <li key={i} className={`flex justify-between py-2`}>
                 <span>
-                    <span className={`${isCurrentUser ? "text-yellow-400" : "text-gray-200"}`}>{isCurrentUser ? `#${i + 1} You` : `#${i + 1} ${entry.playerAddress}`}</span>
+                    <span className={`${isCurrentUser ? "text-yellow-400" : "text-gray-200"}`}>{isCurrentUser ? `#${i + 1} You` : `#${i + 1} ${playerAddress}`}</span>
                 </span>
                 
                 <span className="text-green-400">
