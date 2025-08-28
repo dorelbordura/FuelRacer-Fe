@@ -426,8 +426,41 @@ export default function LandingPage({
                             </div>
                         </div>
                     </div>
+                    {/* How to Play Section */}
+                    <section className="mt-12 p-6 bg-gray-900 rounded-2xl shadow-lg" style={{width: '100vh'}}>
+                        <h2 className="text-2xl font-bold mb-6 text-center text-white">How to Play</h2>
+                        <ol className="space-y-4 text-gray-200 list-decimal list-inside mx-auto">
+                            <li>
+                                <span className="font-semibold">Buy $Fuel on Avalanche</span> – 
+                                Token address: 0x29fbb1569364ac8cc48851bd5e144faa2a78f528.
+                                You need to hold at least 10.000.000 $Fuel tokens in order to compete.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Connect your wallet</span> – 
+                                Use MetaMask to connect your wallet to the game.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Get Fuel</span> – 
+                                Buy Fuel with our token or claim your free daily fuel.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Join a race</span> – 
+                                Wait for the countdown, then enter the track when the race opens.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Choose your car</span> – 
+                                Go to the Garage and pick your car before racing.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Compete & Win</span> – 
+                                Race against others, climb the leaderboard, and earn rewards.
+                            </li>
+                        </ol>
+                    </section>
                 </main>
             )}
+
+
 
             {!racing && showGarage && (
                 <Garage
