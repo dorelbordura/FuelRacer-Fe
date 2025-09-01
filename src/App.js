@@ -13,7 +13,7 @@ const sounds = {
 };
 
 sounds.soundtrack.loop = true;
-sounds.soundtrack.volume = 0.4;
+sounds.soundtrack.volume = 0.2;
 
 function App() {
   const currentRunRef = useRef(null);

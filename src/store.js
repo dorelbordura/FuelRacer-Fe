@@ -7,10 +7,14 @@ export const useGame = create((set) => ({
   status: '',
   racing: false,
   result: null,
+  level: null,
+  xp: null,
   setWallet: (w) => set({ wallet: w }),
   setHasAccess: (v) => set({ hasAccess: v }),
   setFuel: (f) => set({ fuel: f }),
   setStatus: (s) => set({ status: s }),
   setRacing: (r) => set({ racing: r }),
-  setResult: (r) => set({ result: r })
+  setResult: (r) => set({ result: r }),
+  setLevel: (l) => set({ level: l }),
+  setXp: (xp) => set({ xp })
 }))

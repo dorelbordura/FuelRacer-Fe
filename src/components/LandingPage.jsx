@@ -13,29 +13,34 @@ import AdminPage from "./AdminPage";
 const cars = [
     {
         name: 'Fuel Truck',
-        image: '/cars/fuelTruck_preview.png'
+        image: '/cars/fuelTruck_preview.png',
+        requiredLevel: 1
     },
     {
         name: 'Mini Cart',
-        image: '/cars/miniCart_preview.png'
+        image: '/cars/miniCart_preview.png',
+        requiredLevel: 2
     },
     {
         name: 'Tractor',
-        image: '/cars/preview_car2.webp'
+        image: '/cars/preview_car2.webp',
+        requiredLevel: 3
     },
     {
         name: 'Fuel Van',
-        image: '/cars/van_preview.png'
+        image: '/cars/van_preview.png',
+        requiredLevel: 4
     },
     {
         name: 'Fuel Bus',
-        image: '/cars/bus_preview.png'
+        image: '/cars/bus_preview.png',
+        requiredLevel: 5
     }
 ];
 
 const soundtrack = new Audio("/sounds/backgroundMusic.mp3");
 soundtrack.loop = true;
-soundtrack.volume = 0.4;
+soundtrack.volume = 0.2;
 
 function toDate(ts) {
   // supports Firestore Timestamp-like objects from backend { _seconds, _nanoseconds } OR { seconds, nanoseconds }
@@ -139,7 +144,7 @@ export default function LandingPage({
     const [summary, setSummary] = useState({ active: null, upcoming: [] });
     const [races, setRaces] = useState([]);
     const countdown = useFuelRacerCountdown(summary);
-    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel, setResult} = useGame();
+    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel, setResult, setLevel, setXp} = useGame();
     const [notification, setNotification] = useState(null);
     const [transitionState, setTransitionState] = useState("idle");
     const [showGarage, setShowGarage] = useState(false);
@@ -180,13 +185,15 @@ export default function LandingPage({
 
     useEffect(() => {
         if (wallet) {
-            getUserFuel(wallet);
+            getPlayerData(wallet);
         }
     }, [wallet]);
 
-    const getUserFuel = async (address) => {
+    const getPlayerData = async (address) => {
         const data = await api(`/player/me`, { method: "GET", user: JSON.stringify({ address }) });
         setFuel(data.fuel);
+        setLevel(data.level);
+        setXp(data.xp);
     };
 
     const handleConnect = async () => {
@@ -250,6 +257,9 @@ export default function LandingPage({
 
             if (data.fuel) setFuel(data.fuel);
             if (data.message) setStatus(data.message);
+            if (data.level) setLevel(data.level);
+            if (data.xp) setXp(data.xp);
+
             setResult(data)
             setTimeout(() => setRacing(false), 3000);
             setShowGarage(false);
@@ -284,6 +294,14 @@ export default function LandingPage({
         setStatus('Purchased fuel')
     }
 
+    const onStartRaceClick = () => {
+        if (!wallet) {
+            showNotification({message: 'Wallet not connected', type: 'warning'});
+        } else {
+            setTransitionState("gateClosing");
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-200 font-sans">
             {/* Header */}
@@ -306,7 +324,7 @@ export default function LandingPage({
                                         setRacing(false);
                                         setShowAdmin(true);
                                     }}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-md px-4 py-2 rounded"
+                                    className="bg-red-500 hover:bg-red-600 text-white shadow-md px-4 py-2 rounded"
                                     label="Admin"
                                 />
                             )}
@@ -318,14 +336,14 @@ export default function LandingPage({
                             <WrappedButton
                                 onClick={buyFuel}
                                 className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
-                                label="Buy fuel"
+                                label="Buy Fuel"
                             />
                             <div className="fuel-gauge"><span className="fuel-dot" /> Fuel Units: {fuel}</div>
                         </>
                     )}
                     <WrappedButton
                         onClick={!wallet ? handleConnect : () => null}
-                        className="bg-green-600 text-white shadow-md px-4 py-2 rounded"
+                        className="bg-red-500 hover:bg-red-600 text-white shadow-md px-4 py-2 rounded"
                         label={wallet
                             ? wallet.slice(0, 6) + "..." + wallet.slice(-4)
                             : "Connect Wallet"
@@ -355,9 +373,9 @@ export default function LandingPage({
                                         <span className="text-white">{countdown.timeToEnd}</span>
                                     </div>
                                     <WrappedButton
-                                        onClick={() => setTransitionState("gateClosing")}
+                                        onClick={onStartRaceClick}
                                         className="bg-red-600 text-white text-lg shadow-md px-4 py-2 rounded startRaceButton"
-                                        label="Start Race 🏁"
+                                        label="Start Race"
                                     />
                                 </div>
                                 <div className="leaderboard-container">
