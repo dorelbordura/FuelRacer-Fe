@@ -82,6 +82,12 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
     let crashes = [];
     let spikePenalty = 0;
 
+    // 🔥 Nitro state
+    let nitroActive = false;
+    let nitroUsed = false;
+    let nitroEndTime = 0;
+    let nitroTrail = [];
+
     function spawnObstacle() {
       const w = 100;
       const h = 150;
@@ -189,6 +195,31 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       // draw player car
       drawCar(carX, carY);
 
+      // spawn nitro trail if active
+      if (nitroActive) {
+        for (let i = 0; i < 3; i++) { // spawn 3 particles per frame
+          nitroTrail.push({
+            x: carX + carWidth / 2 - 10 + Math.random() * 20, // around car center
+            y: carY + carHeight - 10,
+            life: 20 + Math.random() * 10,
+            size: 10 + Math.random() * 10,
+            alpha: 1
+          });
+        }
+      }
+
+      // draw nitro trail
+      nitroTrail.forEach(p => {
+        ctx.fillStyle = `rgba(0, 200, 255, ${p.alpha})`; // blue glow
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.size, p.size / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        p.life--;
+        p.alpha -= 0.05;
+        p.size *= 0.95; // shrink
+      });
+      nitroTrail = nitroTrail.filter(p => p.life > 0);
+
       // obstacles
       if (Math.random() < 0.05) spawnObstacle();
       ctx.fillStyle = "#ff4040";
@@ -201,46 +232,55 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
         }
 
         // collision → slow down
-        if (
-          carX < o.x + o.w &&
-          carX + carWidth > o.x &&
-          carY < o.y + o.h &&
-          carY + carHeight > o.y
-        ) {
 
-          if (!o.hit) {   // only trigger once
-            o.hit = true;
-            if (o.type === "car") {
-              speed = Math.max(speed * 0.3, 2); // slow down
+        if (!nitroActive) {
+          if (
+            carX < o.x + o.w &&
+            carX + carWidth > o.x &&
+            carY < o.y + o.h &&
+            carY + carHeight > o.y
+          ) {
   
-              // play sound
-              crashSound.currentTime = 0;
-              crashSound.play();
+            if (!o.hit) {   // only trigger once
+              o.hit = true;
+              if (o.type === "car") {
+                speed = Math.max(speed * 0.3, 2); // slow down
+    
+                // play sound
+                crashSound.currentTime = 0;
+                crashSound.play();
+    
+                // add crash animation
+                crashes.push({
+                  x: carX + carWidth / 2,
+                  y: carY,
+                  life: 30 // frames
+                });
+              } else if (o.type === "spike") {
+                speed = Math.max(speed * 0.2, 1); // heavy penalty
+                maxSpeed = 5;              // penalty for 2s
+                spikePenalty = 2000;
   
-              // add crash animation
-              crashes.push({
-                x: carX + carWidth / 2,
-                y: carY,
-                life: 30 // frames
-              });
-            } else if (o.type === "spike") {
-              speed = Math.max(speed * 0.2, 1); // heavy penalty
-              maxSpeed = 5;              // penalty for 2s
-              spikePenalty = 2000;
-
-              fartSound.currentTime = 0;
-              fartSound.play();
-
-              // restore after 2 seconds
-              setTimeout(() => {
-                maxSpeed = defaultMaxSpeed;
-                spikePenalty = 0;
-              }, 2000);
+                fartSound.currentTime = 0;
+                fartSound.play();
+  
+                // restore after 2 seconds
+                setTimeout(() => {
+                  maxSpeed = defaultMaxSpeed;
+                  spikePenalty = 0;
+                }, 2000);
+              }
             }
           }
         }
       });
       obstacles = obstacles.filter((o) => o.y < H);
+
+      // Nitro timer check
+      if (nitroActive && ts > nitroEndTime) {
+        nitroActive = false;
+        maxSpeed = defaultMaxSpeed;
+      }
 
       // HUD
       ctx.save(); // save canvas state
@@ -292,6 +332,16 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
           ctx.fillText("⚠️ Spike hit! Speed reduced!", W / 2, 100);
         }
 
+        if (nitroActive) {
+          ctx.fillStyle = "cyan";
+          ctx.font = "bold 28px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("🔥 NITRO BOOST ACTIVE!", W / 2, 60);
+        } else if (!nitroUsed) {
+          ctx.fillStyle = "cyan";
+          ctx.fillText("Press SPACE for Nitro Boost!", 20, 130);
+        }
+
         // draw finish line
         if (trackLength - distance < H) {
 
@@ -331,10 +381,26 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
 
     function onKey(e) {
       keys[e.key] = true;
+
+      // Prevent page scroll for Space
+      if (e.key === " ") {
+        e.preventDefault();  // ✅ this stops the scroll
+      }
+
       if (e.key === "ArrowUp" && !started) {
         setStarted(true);
         startTime = performance.now();
         speed = 5;
+      }
+
+      if (e.key === " " && !nitroUsed && started) {
+        nitroActive = true;
+        nitroUsed = true;
+        nitroEndTime = performance.now() + 3000;
+        speed = 20;
+        maxSpeed = 20;
+        // nitroSound.currentTime = 0;
+        // nitroSound.play();
       }
     }
     function offKey(e) {
