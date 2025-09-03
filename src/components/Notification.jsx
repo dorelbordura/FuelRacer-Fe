@@ -10,7 +10,7 @@ export default function Notification({ message, type = "info" }) {
   };
 
   return (
-    <div className={`absolute top-6 left-1/2 transform -translate-x-1/2 ${base} ${styles[type]}`} style={{zIndex: '9'}}>
+    <div className={`absolute top-6 left-1/2 transform -translate-x-1/2 ${base} ${styles[type]}`} style={{zIndex: '999'}}>
       {message}
     </div>
   );

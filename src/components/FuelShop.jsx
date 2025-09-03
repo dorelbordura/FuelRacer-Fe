@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { Contract} from "ethers";
+import { Contract, JsonRpcProvider, parseUnits } from "ethers";
 import { useGame } from "../store";
+import { ERC20_ABI } from "../utils/erc20Abi";
 
 const TOKEN_ADDRESS = process.env.REACT_APP_FUEL_TOKEN_ADDRESS;
 
 const fuelOptions = [
-  { id: 1, fuel: 1, price: 250_000, label: "1 Fuel", bonus: "0%" },
-  { id: 2, fuel: 5, price: 1_000_000, label: "5 Fuel", bonus: "+20%" },
-  { id: 3, fuel: 20, price: 3_500_000, label: "20 Fuel", bonus: "+30%" },
+    { id: 1, fuel: 1, price: 250_000, label: "1 Fuel", bonus: "0%", cost: parseUnits("250000", 18) },
+    { id: 2, fuel: 5, price: 1_000_000, label: "5 Fuel", bonus: "+20%", cost: parseUnits("1000000", 18) },
+    { id: 3, fuel: 20, price: 3_500_000, label: "20 Fuel", bonus: "+30%", cost: parseUnits("3500000", 18) },
 ];
 
-const FuelPopup = ({ onClose, rewardsWallet, buyFuel, showNotification }) => {
+const rewardsWallet = "0xF7A5af0EB2C9F7cf5f2c9687Dd3B0237e7718475";
+
+const FuelPopup = ({ onClose, buyFuel, showNotification }) => {
     const [loading, setLoading] = useState(false);
     const {credentials, setFuel} = useGame();
     const [selected, setSelected] = useState(2);
@@ -18,26 +21,36 @@ const FuelPopup = ({ onClose, rewardsWallet, buyFuel, showNotification }) => {
     const handleBuy = async (option) => {
         try {
             setLoading(true);
-            const {signer} = credentials || {};
+            const {signer, address} = credentials || {};
 
             const token = new Contract(
                 TOKEN_ADDRESS,
-                ["function transfer(address to, uint256 value) public returns (bool)"],
+                [
+                    "function transfer(address to, uint256 value) public returns (bool)"
+                ],
                 signer
             );
 
-            // transfer tokens to rewards wallet
-            let tx = await token.transfer(rewardsWallet, option.cost);
-            let receipt = await tx.wait();
+            const rpcProvider = new JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc");
+            const contract = new Contract(TOKEN_ADDRESS, ERC20_ABI, rpcProvider);
 
-            // notify backend for validation + burn + fuel credit
-            const res = await buyFuel(option.fuel, receipt.hash);
+            const balance = await contract.balanceOf(address);
 
-            if (res.fuel) {
-                setFuel(res.fuel)
-                showNotification({message: `You bought ${option.fuel} Fuel!` })
+            if (balance < option.cost) {
+                showNotification({message: 'Not enough $Fuel tokens', type: 'warning'});
+            } else {
+                // // transfer tokens to rewards wallet
+                let tx = await token.transfer(rewardsWallet, option.cost);
+                let receipt = await tx.wait();
+    
+                // notify backend for validation + burn + fuel credit
+                const res = await buyFuel(option.fuel, receipt.hash);
+    
+                if (res.fuel) {
+                    setFuel(res.fuel)
+                    showNotification({message: `You bought ${option.fuel} Fuel!` })
+                }
             }
-
         } catch (err) {
             console.error(err);
             showNotification({message: 'Transaction failed' })
@@ -104,9 +117,37 @@ const FuelPopup = ({ onClose, rewardsWallet, buyFuel, showNotification }) => {
                 {/* Buy Button */}
                 <button
                     onClick={onBuyClick}
-                    className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-[0_0_15px_rgba(255,0,0,0.6)]"
+                    disabled={loading}
+                    className={`mt-6 w-full font-bold py-3 rounded-xl transition shadow-[0_0_15px_rgba(255,0,0,0.6)] 
+                        ${loading ? "bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"}`}
                 >
-                    Buy
+                    {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                            <svg
+                                className="animate-spin h-5 w-5 text-red-500"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                ></path>
+                            </svg>
+                            <span>Processing...</span>
+                        </div>
+                    ) : (
+                        "Buy"
+                    )}
                 </button>
             </div>
         </div>

@@ -309,7 +309,6 @@ export default function LandingPage({
             {showShopPopup ? (
                 <FuelPopup
                     onClose={() => setShowShopPopup(false)}
-                    rewardsWallet={process.env.REWARDS_WALLET}
                     buyFuel={buyFuel}
                     showNotification={showNotification}
                 />
