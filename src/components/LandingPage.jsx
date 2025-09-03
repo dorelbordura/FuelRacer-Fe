@@ -9,6 +9,7 @@ import CanvasGame from './CanvasGame';
 import GateOverlay from './GateOverlay';
 import Garage from "./Garage";
 import AdminPage from "./AdminPage";
+import FuelPopup from "./FuelShop";
 
 const cars = [
     {
@@ -144,7 +145,7 @@ export default function LandingPage({
     const [summary, setSummary] = useState({ active: null, upcoming: [] });
     const [races, setRaces] = useState([]);
     const countdown = useFuelRacerCountdown(summary);
-    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel, setResult, setLevel, setXp} = useGame();
+    const {setFuel, setStatus, setRacing, setWallet, wallet, racing, fuel, setResult, setLevel, setXp, setCredentials} = useGame();
     const [notification, setNotification] = useState(null);
     const [transitionState, setTransitionState] = useState("idle");
     const [showGarage, setShowGarage] = useState(false);
@@ -152,6 +153,7 @@ export default function LandingPage({
     const [pastPage, setPastPage] = useState(1);
     const [pastPerPage] = useState(5);
     const [showAdmin, setShowAdmin] = useState(false);
+    const [showShopPopup, setShowShopPopup] = useState(false);
     const token = localStorage.getItem("fr_jwt");
     const tokenPayload = parseJwt(token);
 
@@ -198,7 +200,7 @@ export default function LandingPage({
 
     const handleConnect = async () => {
         try {
-          const {provider, signer, address} = await connectMetaMask();
+          const {provider, signer, address} = await connectMetaMask(setCredentials);
           await registerToken(provider, signer, address);
           setWallet(address);
     
@@ -288,7 +290,7 @@ export default function LandingPage({
     // Optional UX enhancement: do token transfer via contract call and send txHash here.
     const buyFuel = async (amount = 1, txHash = '') => {
         setStatus('Verifying purchase...')
-        const data = await api(`/fuel/purchase`, { method: "POST", body: JSON.stringify({ amount, txHash }) });
+        const data = await api(`/fuel/purchase`, { method: "POST", body: JSON.stringify({ amount, txHash }), user: { address: wallet }});
         if (data.error) { setStatus(data.error); return }
         setFuel(data.fuel)
         setStatus('Purchased fuel')
@@ -304,6 +306,14 @@ export default function LandingPage({
 
     return (
         <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-200 font-sans">
+            {showShopPopup ? (
+                <FuelPopup
+                    onClose={() => setShowShopPopup(false)}
+                    rewardsWallet={process.env.REWARDS_WALLET}
+                    buyFuel={buyFuel}
+                    showNotification={showNotification}
+                />
+            ) : null}
             {/* Header */}
             <header className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-800">
                 <div className="text-xl font-bold tracking-wide text-white" style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px'}} onClick={() => {
@@ -334,7 +344,7 @@ export default function LandingPage({
                                 label="Claim Daily Fuel"
                             />
                             <WrappedButton
-                                onClick={buyFuel}
+                                onClick={() => setShowShopPopup(true)}
                                 className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
                                 label="Buy Fuel"
                             />
