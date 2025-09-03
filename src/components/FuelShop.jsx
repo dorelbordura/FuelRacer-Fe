@@ -57,19 +57,19 @@ const FuelPopup = ({ onClose, rewardsWallet, buyFuel, showNotification }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-            <div className="bg-gradient-to-b from-black to-gray-900 text-white rounded-2xl shadow-[0_0_25px_rgba(255,0,0,0.6)] w-[420px] p-6 relative border border-red-700">
+            <div className="bg-gradient-to-b from-black to-gray-900 text-white rounded-2xl shadow-[0_0_25px_rgba(255,0,0,0.6)] w-[620px] p-20 relative border border-red-700">
                 
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg"
+                    className="absolute top-5 right-5 text-gray-400 hover:text-red-500 text-lg"
                     style={{cursor: 'pointer'}}
                 >
                     ✕
                 </button>
 
                 {/* Title */}
-                <h2 className="text-3xl font-extrabold text-center mb-6 text-red-500 tracking-wide drop-shadow-lg">
+                <h2 className="text-3xl font-extrabold text-center mb-20 text-red-500 tracking-wide drop-shadow-lg">
                     Gas Station
                 </h2>
 
