@@ -37,7 +37,35 @@ carSources.forEach(src => {
   obstacleImages.push(img);
 });
 
-export default function RacingGame({ onFinish, finalTime, selectedCar }) {
+// 🎨 Map themes
+const mapThemes = {
+  sunny: {
+    background: "#4ec0ff", // sky blue
+    road: "#333",
+    laneColor: "white",
+    effect: null
+  },
+  snowy: {
+    background: "#e6f7ff",
+    road: "#aaa",
+    laneColor: "#fff",
+    effect: "snow"
+  },
+  rainy: {
+    background: "#1a1a1a",
+    road: "#222",
+    laneColor: "#bbb",
+    effect: "rain"
+  },
+  desert: {
+    background: "#f4e2b3",
+    road: "#704214",
+    laneColor: "#fff8dc",
+    effect: "dust"
+  }
+};
+
+export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme = "sunny" }) {
   const ref = useRef(null);
   const [finished, setFinished] = useState(false);
   const [started, setStarted] = useState(true);
@@ -59,6 +87,8 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
 
     let W = canvas.width;
     let H = canvas.height;
+
+    const theme = mapThemes[mapTheme] || mapThemes.sunny;
 
     // Race settings
     const trackLength = 25000; // units
@@ -87,6 +117,7 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
     let nitroUsed = false;
     let nitroEndTime = 0;
     let nitroTrail = [];
+    let particles = [];
 
     function spawnObstacle() {
       const w = 100;
@@ -131,6 +162,62 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       }
     }
 
+    function spawnParticles(type, W) {
+      const count = type === "snow" ? 2 : type === "rain" ? 5 : 1;
+
+      const maxParticles =
+        type === "snow" ? 120 : type === "rain" ? 180 : 80;
+      if (particles.length >= maxParticles) return;
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * W,
+          y: -10,
+          size: type === "snow" ? 2 + Math.random() * 3 : 2,
+          speedY:
+            type === "snow"
+              ? 2 + Math.random() * 2
+              : type === "rain"
+              ? 8 + Math.random() * 5
+              : 2 + Math.random() * 2,
+          type
+        });
+      }
+    }
+
+    function updateParticles(H, W) {
+      particles.forEach(p => {
+        p.y += p.speedY; // independent of car speed
+        if (p.y > H) {
+          // respawn at top
+          p.y = -10;
+          p.x = Math.random() * W;
+        }
+      });
+    }
+
+    function drawParticles(ctx) {
+      particles.forEach(p => {
+        if (p.type === "snow") {
+          ctx.fillStyle = "white";
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === "rain") {
+          ctx.strokeStyle = "rgba(173,216,230,0.8)";
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x, p.y + 10);
+          ctx.stroke();
+        } else if (p.type === "dust") {
+          ctx.fillStyle = "rgba(210,180,140,0.6)";
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
     function drawCar(x, y) {
       if (playerImg.complete) {
         ctx.drawImage(playerImg, x, y, carWidth, carHeight);
@@ -144,7 +231,11 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       ctx.clearRect(0, 0, W, H);
 
       // road background
-      ctx.fillStyle = "#333";
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, W, H);
+
+      // road
+      ctx.fillStyle = theme.road;
       ctx.fillRect(0, 0, W, H);
 
       // lane markings
@@ -152,7 +243,7 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
       if (laneOffset > 60) laneOffset = 0;
 
       const laneWidth = 150; // adjust for number of lanes
-      ctx.strokeStyle = "white";
+      ctx.strokeStyle = theme.laneColor;
       ctx.lineWidth = 4;
 
       for (let x = laneWidth; x < W; x += laneWidth) {
@@ -162,6 +253,21 @@ export default function RacingGame({ onFinish, finalTime, selectedCar }) {
           ctx.lineTo(x, y + 30 + laneOffset); // dashed segments
           ctx.stroke();
         }
+      }
+
+      // spawn particles occasionally
+      if (mapTheme === "snowy") {
+        if (Math.random() < 0.15) spawnParticles("snow", W);
+        updateParticles(H, W);
+        drawParticles(ctx);
+      } else if (mapTheme === "rainy") {
+        if (Math.random() < 0.3) spawnParticles("rain", W);
+        updateParticles(H, W);
+        drawParticles(ctx);
+      } else if (mapTheme === "desert") {
+        if (Math.random() < 0.1) spawnParticles("dust", W);
+        updateParticles(H, W);
+        drawParticles(ctx);
       }
 
       // handle controls

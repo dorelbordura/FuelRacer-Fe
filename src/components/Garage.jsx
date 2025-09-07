@@ -109,7 +109,7 @@ export default function Garage({ cars = [], onSelect }) {
             ? "bg-gray-600 text-gray-300 cursor-not-allowed"
             : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:scale-105"
         }`}
-        style={{zIndex: '9'}}
+        style={{zIndex: '9', cursor: 'pointer'}}
       >
         {locked ? `Locked` : `Select Car`}
       </button>

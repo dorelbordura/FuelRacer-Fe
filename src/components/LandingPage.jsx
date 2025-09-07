@@ -43,20 +43,6 @@ const soundtrack = new Audio("/sounds/backgroundMusic.mp3");
 soundtrack.loop = true;
 soundtrack.volume = 0.2;
 
-function toDate(ts) {
-  // supports Firestore Timestamp-like objects from backend { _seconds, _nanoseconds } OR { seconds, nanoseconds }
-  if (!ts) return null;
-  if (ts._seconds) return new Date(ts._seconds * 1000);
-  if (ts.seconds) return new Date(ts.seconds * 1000);
-  if (typeof ts === "string" || typeof ts === "number") return new Date(ts);
-  return null;
-}
-
-function formatTime(dt) {
-  if (!dt) return "—";
-  return dt.toLocaleString(undefined, { hourCycle: "h23" });
-}
-
 const Button = ({ children, onClick, className }) => (
     <button
         onClick={onClick}
@@ -92,7 +78,7 @@ function LeaderboardModal({ race, open }) {
     }
     if (open) {
       load();
-      timer = setInterval(load, 5000);
+      timer = setInterval(load, 60000);
     }
     return () => timer && clearInterval(timer);
   }, [open, race?.id]);
@@ -181,7 +167,7 @@ export default function LandingPage({
             }
         }
         load();
-        t = setInterval(load, 5000);
+        t = setInterval(load, 60000);
         return () => clearInterval(t);
     }, []);
 
@@ -319,6 +305,8 @@ export default function LandingPage({
                     setShowGarage(false);
                     setRacing(false);
                     setShowAdmin(false);
+                    soundtrack.pause();
+                    soundtrack.currentTime = 0;
                 }}>
                     <img src="/logo.png" alt="Fuel Racer Logo" style={{width: '50px'}} />
                     Fuel Racer
