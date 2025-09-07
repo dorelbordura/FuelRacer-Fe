@@ -62,6 +62,7 @@ export default function Garage({ cars = [], onSelect }) {
         <button
           onClick={prevCar}
           className="absolute left-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
+          style={{cursor: 'pointer'}}
         >
           <ChevronLeft size={36} />
         </button>
@@ -95,6 +96,7 @@ export default function Garage({ cars = [], onSelect }) {
         <button
           onClick={nextCar}
           className="absolute right-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
+          style={{cursor: 'pointer'}}
         >
           <ChevronRight size={36} />
         </button>

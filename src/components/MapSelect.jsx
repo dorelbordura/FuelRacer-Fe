@@ -18,12 +18,9 @@ export default function MapSelect({ maps = [], onSelect }) {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden text-white"
+      className="relative flex flex-col items-center justify-center h-screen w-full text-white"
       style={{
-        background: "url('/garage.jpg')", // can swap to a "map room" bg if you have one
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        paddingTop: "40px",
+        background: "radial-gradient(circle at center, #111 0%, #000 100%)"
       }}
     >
       {/* 🔹 Level / XP HUD */}
@@ -68,6 +65,7 @@ export default function MapSelect({ maps = [], onSelect }) {
         <button
           onClick={prevMap}
           className="absolute left-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
+          style={{cursor: 'pointer'}}
         >
           <ChevronLeft size={36} />
         </button>
@@ -102,6 +100,7 @@ export default function MapSelect({ maps = [], onSelect }) {
         <button
           onClick={nextMap}
           className="absolute right-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
+          style={{cursor: 'pointer'}}
         >
           <ChevronRight size={36} />
         </button>
