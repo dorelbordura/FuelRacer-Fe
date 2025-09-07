@@ -10,6 +10,7 @@ import GateOverlay from './GateOverlay';
 import Garage from "./Garage";
 import AdminPage from "./AdminPage";
 import FuelPopup from "./FuelShop";
+import MapSelect from "./MapSelect";
 
 const cars = [
     {
@@ -39,6 +40,29 @@ const cars = [
     }
 ];
 
+const maps = [
+    {
+        name: 'Sunny',
+        image: '/maps/sunny.png',
+        requiredLevel: 1
+    },
+    {
+        name: 'Snowy',
+        image: '/maps/snowy.png',
+        requiredLevel: 10
+    },
+    {
+        name: 'Rainy',
+        image: '/maps/rainy.png',
+        requiredLevel: 10
+    },
+    {
+        name: 'Desert',
+        image: '/maps/desert.png',
+        requiredLevel: 10
+    }
+]
+
 const themeNames = ["sunny", "snowy", "rainy", "desert"];
 
 const soundtrack = new Audio("/sounds/backgroundMusic.mp3");
@@ -66,7 +90,7 @@ function LeaderboardModal({ race, open }) {
   const [rows, setRows] = useState([]);
   const {wallet} = useGame();
 
-  // auto-refresh leaderboard every 5s while open
+  // auto-refresh leaderboard every 1m while open
   useEffect(() => {
     let timer;
     async function load() {
@@ -145,6 +169,7 @@ export default function LandingPage({
     const token = localStorage.getItem("fr_jwt");
     const tokenPayload = parseJwt(token);
     const [currentTheme, setCurrentTheme] = useState(themeNames[0]);
+    const [showMaps, setShowMaps] = useState(false);
 
     const paginatedRaces = races.slice(
         (pastPage - 1) * pastPerPage,
@@ -152,7 +177,7 @@ export default function LandingPage({
     );
     const totalPages = Math.ceil(races.length / pastPerPage);
 
-    // Auto-refresh summary every 5s
+    // Auto-refresh summary every 1m
     useEffect(() => {
         let t;
         async function load() {
@@ -221,9 +246,6 @@ export default function LandingPage({
                     showNotification({message: data.message || 'Not enough fuel', type: 'warning'});
                     return setStatus(data.message || 'Not enough fuel')
                 }
-
-                const randomIndex = Math.floor(Math.random() * themeNames.length);
-                setCurrentTheme(themeNames[randomIndex]);
         
                 setFuel(data.fuel)
                 setRacing(true)
@@ -257,6 +279,7 @@ export default function LandingPage({
             setResult(data)
             setTimeout(() => setRacing(false), 3000);
             setShowGarage(false);
+            setShowMaps(false);
             soundtrack.pause();
             soundtrack.currentTime = 0;
         } catch (e) {
@@ -311,6 +334,7 @@ export default function LandingPage({
                     setShowGarage(false);
                     setRacing(false);
                     setShowAdmin(false);
+                    setShowMaps(false);
                     soundtrack.pause();
                     soundtrack.currentTime = 0;
                 }}>
@@ -325,6 +349,7 @@ export default function LandingPage({
                                     onClick={() => {
                                         setShowGarage(false);
                                         setRacing(false);
+                                        setShowMaps(false);
                                         setShowAdmin(true);
                                     }}
                                     className="bg-red-500 hover:bg-red-600 text-white shadow-md px-4 py-2 rounded"
@@ -364,7 +389,7 @@ export default function LandingPage({
 
             {/* Main Body */}
             {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} mapTheme={currentTheme} />}
-            {!racing && !showGarage && !showAdmin && (
+            {!racing && !showGarage && !showAdmin && !showMaps && (
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
                     {
@@ -483,18 +508,29 @@ export default function LandingPage({
 
 
 
-            {!racing && showGarage && (
+            {!racing && !showMaps && showGarage && (
                 <Garage
                     cars={cars}
                     onSelect={(car) => {
                         setSelectedCar(car);
-                        startRun(summary.active);
+                        setShowGarage(false);
+                        setShowMaps(true);
                     }}
                 />
             )}
 
-            {!racing && !showGarage && showAdmin && (
+            {!racing && !showGarage && !showMaps && showAdmin && (
                 <AdminPage token={tokenPayload} />
+            )}
+
+            {!racing && !showGarage && showMaps && (
+                <MapSelect
+                    maps={maps}
+                    onSelect={(mapIndex) => {
+                        setCurrentTheme(themeNames[mapIndex]);
+                        startRun(summary.active);
+                    }}
+                />
             )}
 
             {transitionState !== "idle" && (

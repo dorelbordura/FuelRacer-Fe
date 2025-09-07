@@ -30,6 +30,7 @@ function App() {
   useEffect(() => {
     if (isMobile()) {
       setMobile(true);
+      setIsLoading(false);
     }
 
     const preloadImage = (src) =>

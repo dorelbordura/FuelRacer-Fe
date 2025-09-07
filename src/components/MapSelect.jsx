@@ -2,27 +2,28 @@ import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useGame } from "../store";
 
-export default function Garage({ cars = [], onSelect }) {
+export default function MapSelect({ maps = [], onSelect }) {
   const [current, setCurrent] = useState(0);
-  const {level = 1, xp = 0} = useGame();
+  const { level = 1, xp = 0 } = useGame();
 
-  const prevCar = () => setCurrent((c) => (c - 1 + cars.length) % cars.length);
-  const nextCar = () => setCurrent((c) => (c + 1) % cars.length);
+  const prevMap = () => setCurrent((c) => (c - 1 + maps.length) % maps.length);
+  const nextMap = () => setCurrent((c) => (c + 1) % maps.length);
 
   // XP system
   const xpForCurrent = 100 * Math.pow(2, level - 1);
   const xpProgress = Math.min(100, (xp / xpForCurrent) * 100);
 
-  const car = cars[current];
-  const locked = level < (car.requiredLevel || 1);
+  const map = maps[current];
+  const locked = level < (map.requiredLevel || 1);
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden text-white"
+    <div
+      className="relative flex flex-col items-center justify-center h-screen w-full overflow-hidden text-white"
       style={{
-        background: "url('/garage.jpg')",
+        background: "url('/garage.jpg')", // can swap to a "map room" bg if you have one
         backgroundSize: "cover",
         backgroundPosition: "center",
-        paddingTop: "40px"
+        paddingTop: "40px",
       }}
     >
       {/* 🔹 Level / XP HUD */}
@@ -55,24 +56,29 @@ export default function Garage({ cars = [], onSelect }) {
       </div>
 
       {/* Title */}
-      <h1 className="text-4xl font-bold mb-10 tracking-wider neon-glow" style={{zIndex: '9'}}>Select Your Car</h1>
+      <h1
+        className="text-4xl font-bold mb-10 tracking-wider neon-glow"
+        style={{ zIndex: "9" }}
+      >
+        Select Your Map
+      </h1>
 
       <div className="relative flex items-center justify-center w-full max-w-4xl">
         {/* Left arrow */}
         <button
-          onClick={prevCar}
+          onClick={prevMap}
           className="absolute left-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
         >
           <ChevronLeft size={36} />
         </button>
 
-        {/* Car display */}
+        {/* Map display */}
         <div className="flex flex-col items-center space-y-8">
           <div className="relative w-150 h-115 flex items-center justify-center">
-            {/* Floating car */}
+            {/* Floating map image */}
             <img
-              src={cars[current].image}
-              alt={cars[current].name}
+              src={maps[current].image}
+              alt={maps[current].name}
               className={`max-h-full object-contain drop-shadow-[0_0_25px_rgba(255,0,0,0.6)] animate-float ${
                 locked ? "opacity-40 grayscale" : ""
               }`}
@@ -82,18 +88,19 @@ export default function Garage({ cars = [], onSelect }) {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-xl">
                 <Lock size={48} className="text-red-400 mb-2" />
                 <span className="text-lg font-semibold text-red-300">
-                  Requires Level {car.requiredLevel}
+                  Requires Level {map.requiredLevel}
                 </span>
               </div>
             )}
-
           </div>
-          <div className="text-2xl font-semibold tracking-wide">{cars[current].name}</div>
+          <div className="text-2xl font-semibold tracking-wide">
+            {maps[current].name}
+          </div>
         </div>
 
         {/* Right arrow */}
         <button
-          onClick={nextCar}
+          onClick={nextMap}
           className="absolute right-6 p-4 rounded-full bg-black/40 backdrop-blur-md border border-red-400 text-red-400 hover:bg-red-400 hover:text-black transition shadow-lg neon-glow"
         >
           <ChevronRight size={36} />
@@ -109,9 +116,9 @@ export default function Garage({ cars = [], onSelect }) {
             ? "bg-gray-600 text-gray-300 cursor-not-allowed"
             : "bg-gradient-to-r from-red-500 to-orange-500 hover:scale-105"
         }`}
-        style={{zIndex: '9', cursor: 'pointer'}}
+        style={{ zIndex: "9", cursor: "pointer" }}
       >
-        {locked ? `Locked` : `Select Car`}
+        {locked ? `Locked` : `Select Map`}
       </button>
     </div>
   );
