@@ -272,9 +272,9 @@ export default function LandingPage({
         setTimeout(() => setNotification(null), 2500);
     };
 
-    const claimDaily = async () => {
-        setStatus('Claiming daily...')
-        const data = await api(`/fuel/claimDaily`, { method: "POST" });
+    const claimWeekly = async () => {
+        setStatus('Claiming weekly...')
+        const data = await api(`/fuel/claimWeekly`, { method: "POST" });
         setFuel(data.fuel)
         showNotification({message: data.message || 'Claimed'})
     }
@@ -332,9 +332,9 @@ export default function LandingPage({
                                 />
                             )}
                             <WrappedButton
-                                onClick={claimDaily}
+                                onClick={claimWeekly}
                                 className="btn ghost text-white shadow-md px-4 py-2 rounded hover:bg-gray-700 transition-colors"
-                                label="Claim Daily Fuel"
+                                label="Claim Weekly Fuel"
                             />
                             <WrappedButton
                                 onClick={() => setShowShopPopup(true)}
