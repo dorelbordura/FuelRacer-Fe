@@ -65,10 +65,12 @@ const mapThemes = {
   }
 };
 
-export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme = "sunny" }) {
+export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme }) {
   const ref = useRef(null);
   const [finished, setFinished] = useState(false);
   const [started, setStarted] = useState(true);
+
+  console.log({mapTheme});
 
   const playerImg = new Image();
   playerImg.src = playerCars[selectedCar];
@@ -124,16 +126,19 @@ export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme 
       const h = 150;
       const buffer = 20; // keep spacing from v1.10
       const laneWidth = 150; // must match lane drawing
+
+      const numLanes = Math.floor(W / laneWidth);
+      const roadWidth = numLanes * laneWidth;
+      const margin = (W - roadWidth) / 2;
+
       let y = -h;
       let tries = 0;
       let valid = false;
       let x, chosenImg, type;
 
       while (!valid && tries < 30) {
-        // pick a random lane index (0..N-1)
-        const laneIndex = Math.floor(Math.random() * (W / laneWidth));
-        // center obstacle in lane
-        x = laneIndex * laneWidth + (laneWidth - w) / 2;
+        const laneIndex = Math.floor(Math.random() * numLanes);
+        x = margin + laneIndex * laneWidth + (laneWidth - w) / 2;
 
         valid = true;
         for (let o of obstacles) {
@@ -234,23 +239,122 @@ export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme 
       ctx.fillStyle = theme.background;
       ctx.fillRect(0, 0, W, H);
 
-      // road
-      ctx.fillStyle = theme.road;
-      ctx.fillRect(0, 0, W, H);
-
-      // lane markings
+      // lane markings with centered road + edges
       laneOffset += speed * 0.5;
       if (laneOffset > 60) laneOffset = 0;
 
-      const laneWidth = 150; // adjust for number of lanes
+      // 🛣 Road drawing (theme-specific)
+      let roadGrad;
+      const laneWidth = 150;
+      const numLanes = Math.floor(W / laneWidth);
+      const roadWidth = numLanes * laneWidth;
+      const margin = (W - roadWidth) / 2;
+
+      switch(mapTheme) {
+        case "sunny":
+          roadGrad = ctx.createLinearGradient(0, 0, 0, H);
+          roadGrad.addColorStop(0, "#555"); // top (darker asphalt)
+          roadGrad.addColorStop(1, "#222"); // bottom (lighter asphalt)
+          break;
+
+        case "snowy":
+          roadGrad = ctx.createLinearGradient(0, 0, 0, H);
+          roadGrad.addColorStop(0, "#888"); // top, slightly icy gray
+          roadGrad.addColorStop(1, "#555"); // bottom, asphalt
+          break;
+
+        case "rainy":
+          roadGrad = ctx.createLinearGradient(0, 0, 0, H);
+          roadGrad.addColorStop(0, "#333"); // darker wet asphalt
+          roadGrad.addColorStop(1, "#111"); // bottom
+          break;
+
+        case "desert":
+          roadGrad = ctx.createLinearGradient(0, 0, 0, H);
+          roadGrad.addColorStop(0, "#8B5A2B"); // top brown asphalt
+          roadGrad.addColorStop(1, "#704214"); // bottom darker asphalt
+          break;
+
+        default:
+          roadGrad = ctx.createLinearGradient(0, 0, 0, H);
+          roadGrad.addColorStop(0, "#555");
+          roadGrad.addColorStop(1, "#222");
+      }
+
+      ctx.fillStyle = roadGrad;
+      ctx.fillRect(margin, 0, roadWidth, H);
+
+      if (mapTheme === "sunny") {
+        // left edge
+        const leftEdge = ctx.createLinearGradient(0, 0, margin, 0);
+        leftEdge.addColorStop(0, "#666"); // outer dirt
+        leftEdge.addColorStop(1, "#444"); // near road
+        ctx.fillStyle = leftEdge;
+        ctx.fillRect(0, 0, margin, H);
+
+        // right edge
+        const rightEdge = ctx.createLinearGradient(W - margin, 0, W, 0);
+        rightEdge.addColorStop(0, "#444"); // near road
+        rightEdge.addColorStop(1, "#666"); // outer dirt
+        ctx.fillStyle = rightEdge;
+        ctx.fillRect(W - margin, 0, margin, H);
+      }
+
+
+      if (mapTheme === "snowy") {
+        const leftEdge = ctx.createLinearGradient(0, 0, margin, 0);
+        leftEdge.addColorStop(0, "#fff"); // snow
+        leftEdge.addColorStop(1, "#eee"); // near road
+        ctx.fillStyle = leftEdge;
+        ctx.fillRect(0, 0, margin, H);
+
+        const rightEdge = ctx.createLinearGradient(W - margin, 0, W, 0);
+        rightEdge.addColorStop(0, "#eee");
+        rightEdge.addColorStop(1, "#fff");
+        ctx.fillStyle = rightEdge;
+        ctx.fillRect(W - margin, 0, margin, H);
+      }
+
+
+      if (mapTheme === "rainy") {
+        const leftEdge = ctx.createLinearGradient(0, 0, margin, 0);
+        leftEdge.addColorStop(0, "#111"); // wet dirt
+        leftEdge.addColorStop(1, "#222"); // wet asphalt
+        ctx.fillStyle = leftEdge;
+        ctx.fillRect(0, 0, margin, H);
+
+        const rightEdge = ctx.createLinearGradient(W - margin, 0, W, 0);
+        rightEdge.addColorStop(0, "#222");
+        rightEdge.addColorStop(1, "#111");
+        ctx.fillStyle = rightEdge;
+        ctx.fillRect(W - margin, 0, margin, H);
+      }
+
+
+      if (mapTheme === "desert") {
+        const leftEdge = ctx.createLinearGradient(0, 0, margin, 0);
+        leftEdge.addColorStop(0, "#f4e2b3"); // sand
+        leftEdge.addColorStop(1, "#704214"); // road
+        ctx.fillStyle = leftEdge;
+        ctx.fillRect(0, 0, margin, H);
+
+        const rightEdge = ctx.createLinearGradient(W - margin, 0, W, 0);
+        rightEdge.addColorStop(0, "#704214"); // road
+        rightEdge.addColorStop(1, "#f4e2b3"); // sand
+        ctx.fillStyle = rightEdge;
+        ctx.fillRect(W - margin, 0, margin, H);
+      }
+
+      // draw internal dividers
       ctx.strokeStyle = theme.laneColor;
       ctx.lineWidth = 4;
 
-      for (let x = laneWidth; x < W; x += laneWidth) {
+      for (let i = 1; i < numLanes; i++) {
+        const x = margin + i * laneWidth;
         for (let y = -60; y < H; y += 60) {
           ctx.beginPath();
           ctx.moveTo(x, y + laneOffset);
-          ctx.lineTo(x, y + 30 + laneOffset); // dashed segments
+          ctx.lineTo(x, y + 40 + laneOffset);
           ctx.stroke();
         }
       }
@@ -275,20 +379,26 @@ export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme 
         const accelerating = !!keys["ArrowUp"];
         const braking = !!keys["ArrowDown"];
 
-        // accelerate
-        if (accelerating) {
-          speed = Math.min(maxSpeed, speed + acceleration);
+        if (nitroActive) {
+          speed = 20;
+          maxSpeed = 20;
+        } else {
+          // accelerate
+          if (accelerating) {
+            speed = Math.min(maxSpeed, speed + acceleration);
+          }
+  
+          // brake (can go all the way to 0)
+          if (braking) {
+            speed = Math.max(2, speed - acceleration * 2);
+          }
+  
+          // idle roll / friction: maintain at least baseSpeed ONLY when not braking
+          if (!accelerating && !braking) {
+            speed = Math.max(baseSpeed, speed - deceleration);
+          }
         }
 
-        // brake (can go all the way to 0)
-        if (braking) {
-          speed = Math.max(2, speed - acceleration * 2);
-        }
-
-        // idle roll / friction: maintain at least baseSpeed ONLY when not braking
-        if (!accelerating && !braking) {
-          speed = Math.max(baseSpeed, speed - deceleration);
-        }
 
         if (keys["ArrowLeft"]) carX -= 5;
         if (keys["ArrowRight"]) carX += 5;

@@ -39,6 +39,8 @@ const cars = [
     }
 ];
 
+const themeNames = ["sunny", "snowy", "rainy", "desert"];
+
 const soundtrack = new Audio("/sounds/backgroundMusic.mp3");
 soundtrack.loop = true;
 soundtrack.volume = 0.2;
@@ -142,6 +144,7 @@ export default function LandingPage({
     const [showShopPopup, setShowShopPopup] = useState(false);
     const token = localStorage.getItem("fr_jwt");
     const tokenPayload = parseJwt(token);
+    const [currentTheme, setCurrentTheme] = useState(themeNames[0]);
 
     const paginatedRaces = races.slice(
         (pastPage - 1) * pastPerPage,
@@ -218,6 +221,9 @@ export default function LandingPage({
                     showNotification({message: data.message || 'Not enough fuel', type: 'warning'});
                     return setStatus(data.message || 'Not enough fuel')
                 }
+
+                const randomIndex = Math.floor(Math.random() * themeNames.length);
+                setCurrentTheme(themeNames[randomIndex]);
         
                 setFuel(data.fuel)
                 setRacing(true)
@@ -357,7 +363,7 @@ export default function LandingPage({
             )}
 
             {/* Main Body */}
-            {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} />}
+            {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} mapTheme={currentTheme} />}
             {!racing && !showGarage && !showAdmin && (
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
