@@ -15,12 +15,23 @@ const sounds = {
 sounds.soundtrack.loop = true;
 sounds.soundtrack.volume = 0.2;
 
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(
+    navigator.userAgent
+  );
+}
+
 function App() {
   const currentRunRef = useRef(null);
   const [finalTime, setFinalTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
+    if (isMobile()) {
+      setMobile(true);
+    }
+
     const preloadImage = (src) =>
       new Promise((resolve, reject) => {
         const img = new Image();
@@ -87,10 +98,51 @@ function App() {
   }
 
   return (
-    <LandingPage
-      {...{currentRunRef, registerToken, finalTime, setFinalTime}}
-    />
+    <>
+      {mobile && (
+        <div style={modalStyle}>
+          <div style={modalContentStyle}>
+            <h2>🚫 Mobile Not Supported</h2>
+            <p>
+              This application is only available on desktop. Please open it on
+              a desktop browser to play.
+            </p>
+          </div>
+        </div>
+      )}
+      {
+        !mobile && (
+          <LandingPage
+            {...{currentRunRef, registerToken, finalTime, setFinalTime}}
+          />
+        )
+      }
+    </>
   )
 }
+
+// Full-screen modal style
+const modalStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  backgroundColor: "rgba(0,0,0,0.85)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999,
+};
+
+// Modal content style
+const modalContentStyle = {
+  backgroundColor: "#222",
+  color: "white",
+  padding: "30px 40px",
+  borderRadius: "12px",
+  textAlign: "center",
+  maxWidth: "400px",
+};
 
 export default App;
