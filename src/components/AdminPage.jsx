@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { api } from "./Races";
+import CreateUserPopup from './CreateUserPopup';
 
 export default function AdminPage({ token }) {
   const [players, setPlayers] = useState([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  const [createPlayerOpen, setCreatePlayerOpen] = useState(false);
 
   useEffect(() => {
     if (token.isAdmin) fetchPlayers();
@@ -28,6 +30,19 @@ export default function AdminPage({ token }) {
     setTimeout(() => setSuccess(""), 3000);
   };
 
+  const createPlayer = async (address) => {
+    const res = await api("/admin/createUser", {
+      method: "POST",
+      body: JSON.stringify({ address })
+    });
+
+    if (res.ok) {
+      setSuccess(`Created user ${address}`);
+      fetchPlayers();
+      setTimeout(() => setSuccess(""), 3000);
+    }
+  };
+
   if (!token) return <p>Loading...</p>;
   if (!token.isAdmin) return <p>🚫 You are not an admin</p>;
 
@@ -41,6 +56,13 @@ export default function AdminPage({ token }) {
                 <div className="fixed top-6 right-6 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg animate-fade-in">
                     {success}
                 </div>
+            )}
+
+            {createPlayerOpen && (
+              <CreateUserPopup
+                onClose={() => setCreatePlayerOpen(false)}
+                onConfirm={createPlayer}
+              />
             )}
 
             {/* Search & Refresh */}
@@ -58,6 +80,12 @@ export default function AdminPage({ token }) {
                     className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
                 >
                     Refresh Players
+                </button>
+                <button
+                    onClick={() => setCreatePlayerOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
+                >
+                    Create Player
                 </button>
             </div>
 

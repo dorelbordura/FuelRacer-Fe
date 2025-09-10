@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Confetti from "react-confetti";
 
 // preload obstacle car images
 const obstacleImages = [];
@@ -65,12 +66,10 @@ const mapThemes = {
   }
 };
 
-export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme }) {
+export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme, onLeaderboardClick }) {
   const ref = useRef(null);
   const [finished, setFinished] = useState(false);
   const [started, setStarted] = useState(true);
-
-  console.log({mapTheme});
 
   const playerImg = new Image();
   playerImg.src = playerCars[selectedCar];
@@ -560,28 +559,37 @@ export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme 
 
         // draw finish line
         if (trackLength - distance < H) {
+          const finishZ = trackLength; 
+          const finishY = H - (finishZ - distance); // moves consistently with distance
+          const finishH = 40;
+          const bandBottom = finishY + finishH;
 
-          // checkerboard pattern across full width
-          for (let y = 0; y < bannerHeight; y += squareSize) {
+          // checkerboard pattern
+          for (let y = 0; y < finishH; y += squareSize) {
             for (let x = 0; x < W; x += squareSize) {
               const isDark = ((x / squareSize) + (y / squareSize)) % 2 === 0;
               ctx.fillStyle = isDark ? "#000" : "#fff";
-              ctx.fillRect(x, lineY + y, squareSize, squareSize);
+              ctx.globalAlpha = 0.9; // subtle transparency for nicer look
+              ctx.fillRect(x, finishY + y, squareSize, squareSize);
             }
           }
+          ctx.globalAlpha = 1.0;
 
-          // banner outline
-          ctx.strokeStyle = "#FFD700"; // gold border
+          // gold border
+          ctx.strokeStyle = "#FFD700";
           ctx.lineWidth = 4;
-          ctx.strokeRect(0, lineY, W, bannerHeight);
+          ctx.strokeRect(0, finishY, W, finishH);
 
-          // text above the line
-          ctx.fillStyle = "#FFD700";
+          // shadowed finish text
           ctx.font = "bold 40px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText("🏁 FINISH 🏁", W / 2, lineY - 20);
+          ctx.lineJoin = "round";
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "#000"; // outline for contrast
+          ctx.strokeText("🏁 FINISH 🏁", W / 2, finishY - 20);
+          ctx.fillStyle = "#FFD700";
+          ctx.fillText("🏁 FINISH 🏁", W / 2, finishY - 20);
 
-          
           if (bandBottom >= carNoseY) {
             cancelAnimationFrame(raf);
             setFinished(true);
@@ -647,21 +655,103 @@ export default function RacingGame({ onFinish, finalTime, selectedCar, mapTheme 
         }}
       />
       {finished && finalTime && (
-        <div
-          style={{
-            position: "absolute",
-            top: "40%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "#222",
-            padding: "20px",
-            borderRadius: "12px",
-            color: "white",
-            fontSize: "24px",
-          }}
-        >
-          🏆 Finished in {finalTime}s
-        </div>
+        <>
+          <Confetti numberOfPieces={300} recycle={false} />
+
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(0,0,0,0.85)", // dark overlay
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                background: "linear-gradient(135deg, #220000, #440000)", // deep red gradient
+                border: "4px solid #ff0000",
+                borderRadius: "20px",
+                padding: "50px 70px",
+                textAlign: "center",
+                color: "white",
+                fontFamily: "Impact, sans-serif",
+                animation: "popIn 0.6s ease-out",
+                boxShadow: "0 0 40px rgba(255,0,0,0.7)",
+              }}
+            >
+              <h1
+                style={{
+                  fontSize: "48px",
+                  marginBottom: "20px",
+                  color: "gold",
+                  textShadow: "0 0 10px black",
+                }}
+              >
+                🏁 FINISH! 🏁
+              </h1>
+
+              <p
+                style={{
+                  fontSize: "36px",
+                  margin: "15px 0",
+                  color: "#ff4444",
+                  fontWeight: "bold",
+                  textShadow: "0 0 10px black, 0 0 20px #ff0000",
+                }}
+              >
+                🏆 Time: {finalTime}s
+              </p>
+
+              <div style={{ marginTop: "30px" }}>
+                <button
+                  style={{
+                    margin: "0 15px",
+                    padding: "14px 28px",
+                    fontSize: "22px",
+                    borderRadius: "12px",
+                    border: "2px solid #ff3333",
+                    cursor: "pointer",
+                    background: "linear-gradient(180deg, #550000, #330000)", // subtle dark red
+                    color: "white",
+                    fontWeight: "bold",
+                    textShadow: "0 0 5px black",
+                    boxShadow: "0 0 10px rgba(255,0,0,0.4)",
+                    transition: "all 0.25s ease-in-out",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = "linear-gradient(180deg, #770000, #440000)";
+                    e.currentTarget.style.boxShadow = "0 0 18px rgba(255,0,0,0.7)";
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = "linear-gradient(180deg, #550000, #330000)";
+                    e.currentTarget.style.boxShadow = "0 0 10px rgba(255,0,0,0.4)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  onClick={onLeaderboardClick}
+                >
+                  📊 Leaderboard
+                </button>
+              </div>
+            </div>
+
+            {/* CSS animation */}
+            <style>
+              {`
+                @keyframes popIn {
+                  from { transform: scale(0.5); opacity: 0; }
+                  to { transform: scale(1); opacity: 1; }
+                }
+              `}
+            </style>
+          </div>
+        </>
       )}
     </div>
   );

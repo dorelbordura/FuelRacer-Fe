@@ -277,9 +277,6 @@ export default function LandingPage({
             if (data.xp) setXp(data.xp);
 
             setResult(data)
-            setTimeout(() => setRacing(false), 3000);
-            setShowGarage(false);
-            setShowMaps(false);
             soundtrack.pause();
             soundtrack.currentTime = 0;
         } catch (e) {
@@ -388,7 +385,19 @@ export default function LandingPage({
             )}
 
             {/* Main Body */}
-            {racing && <CanvasGame onFinish={finishRace} finalTime={finalTime} selectedCar={selectedCar} mapTheme={currentTheme} />}
+            {racing && (
+                <CanvasGame
+                    onFinish={finishRace}
+                    finalTime={finalTime}
+                    selectedCar={selectedCar}
+                    mapTheme={currentTheme}
+                    onLeaderboardClick={() => {
+                        setRacing(false);
+                        setShowGarage(false);
+                        setShowMaps(false);
+                    }}
+                />
+            )}
             {!racing && !showGarage && !showAdmin && !showMaps && (
                 <main className="flex-1 flex flex-col items-center p-6 space-y-8">
                     {/* Countdown / Race Status */}
