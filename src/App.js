@@ -66,7 +66,11 @@ function App() {
           '/cars/van.png',
           '/cars/van_preview.png',
           '/cars/bus.png',
-          '/cars/bus_preview.png'
+          '/cars/bus_preview.png',
+          '/maps/desert.png',
+          '/maps/rainy.png',
+          '/maps/snowy.png',
+          '/maps/sunny.png'
         ];
         await Promise.all(images.map(preloadImage));
 
