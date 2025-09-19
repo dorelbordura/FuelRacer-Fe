@@ -170,6 +170,7 @@ export default function LandingPage({
     const tokenPayload = parseJwt(token);
     const [currentTheme, setCurrentTheme] = useState(themeNames[0]);
     const [showMaps, setShowMaps] = useState(false);
+    const [currentSigner, setCurrentSigner] = useState(null);
 
     const paginatedRaces = races.slice(
         (pastPage - 1) * pastPerPage,
@@ -214,7 +215,7 @@ export default function LandingPage({
 
     const handleConnect = async () => {
         try {
-          const {provider, signer, address} = await connectMetaMask(setCredentials);
+          const {provider, signer, address} = await connectMetaMask(setCurrentSigner);
           await registerToken(provider, signer, address);
           setWallet(address);
     
@@ -323,6 +324,7 @@ export default function LandingPage({
                     onClose={() => setShowShopPopup(false)}
                     buyFuel={buyFuel}
                     showNotification={showNotification}
+                    signer={currentSigner}
                 />
             ) : null}
             {/* Header */}
@@ -429,7 +431,7 @@ export default function LandingPage({
                                 ) : (
                                     <>
                                         ⏳ Next race:{" "}
-                                        <span className="text-white">{"Tomorrow at 13:00 UTC"}</span>
+                                        <span className="text-white">Loading...</span>
                                     </>
                                 )}
                                 
@@ -496,7 +498,7 @@ export default function LandingPage({
                             </li>
                             <li>
                                 <span className="font-semibold">Get Fuel</span> – 
-                                Buy Fuel with our token or claim your free daily fuel.
+                                Buy Fuel with our token or claim your free weekly fuel.
                             </li>
                             <li>
                                 <span className="font-semibold">Join a race</span> – 

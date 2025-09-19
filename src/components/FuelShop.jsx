@@ -4,52 +4,57 @@ import { useGame } from "../store";
 import { ERC20_ABI } from "../utils/erc20Abi";
 
 const TOKEN_ADDRESS = process.env.REACT_APP_FUEL_TOKEN_ADDRESS;
+const FUELSHOP_ADDRESS = process.env.REACT_APP_FUEL_SHOP_CONTRACT;
 
 const fuelOptions = [
-    { id: 1, fuel: 1, price: 250_000, label: "1 Fuel", bonus: "0%", cost: parseUnits("250000", 18) },
+    { id: 1, fuel: 1, price: 2, label: "1 Fuel", bonus: "0%", cost: parseUnits("2", 18) },
     { id: 2, fuel: 5, price: 1_000_000, label: "5 Fuel", bonus: "+20%", cost: parseUnits("1000000", 18) },
     { id: 3, fuel: 20, price: 3_500_000, label: "20 Fuel", bonus: "+30%", cost: parseUnits("3500000", 18) },
 ];
 
-const rewardsWallet = "0xF7A5af0EB2C9F7cf5f2c9687Dd3B0237e7718475";
+const FUELSHOP_ABI = [
+  "function buyFuel(uint256 amount) external",
+  "event FuelPurchased(address indexed buyer, uint256 amount)"
+];
 
-const FuelPopup = ({ onClose, buyFuel, showNotification }) => {
+const FuelPopup = ({ onClose, buyFuel, showNotification, signer }) => {
     const [loading, setLoading] = useState(false);
-    const {credentials, setFuel} = useGame();
+    const {wallet, setFuel} = useGame();
     const [selected, setSelected] = useState(2);
 
     const handleBuy = async (option) => {
         try {
             setLoading(true);
-            const {signer, address} = credentials || {};
-
-            const token = new Contract(
-                TOKEN_ADDRESS,
-                [
-                    "function transfer(address to, uint256 value) public returns (bool)"
-                ],
-                signer
-            );
 
             const rpcProvider = new JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc");
-            const contract = new Contract(TOKEN_ADDRESS, ERC20_ABI, rpcProvider);
+            const tokenRead = new Contract(TOKEN_ADDRESS, ERC20_ABI, rpcProvider);
 
-            const balance = await contract.balanceOf(address);
+            const tokenWrite = new Contract(TOKEN_ADDRESS, ERC20_ABI, signer);
+            const fuelShop = new Contract(FUELSHOP_ADDRESS, FUELSHOP_ABI, signer);
+
+            // --- Check balance first
+            const balance = await tokenRead.balanceOf(wallet);
 
             if (balance < option.cost) {
-                showNotification({message: 'Not enough $Fuel tokens', type: 'warning'});
-            } else {
-                // // transfer tokens to rewards wallet
-                let tx = await token.transfer(rewardsWallet, option.cost);
-                let receipt = await tx.wait();
-    
-                // notify backend for validation + burn + fuel credit
-                const res = await buyFuel(option.fuel, receipt.hash);
-    
-                if (res.fuel) {
-                    setFuel(res.fuel)
-                    showNotification({message: `You bought ${option.fuel} Fuel!` })
-                }
+                showNotification({ message: "Not enough $FUEL tokens", type: "warning" });
+                return;
+            }
+
+            const approveTx = await tokenWrite.approve(FUELSHOP_ADDRESS, option.cost);
+            await approveTx.wait();
+
+             // --- Buy fuel
+            const buyTx = await fuelShop.buyFuel(option.cost);
+            const receipt = await buyTx.wait();
+
+            // Notify backend
+            const res = await buyFuel(option.fuel, receipt.hash);
+
+            console.log(res);
+
+            if (res && res.fuel) {
+                setFuel(res.fuel);
+                showNotification({ message: `You bought ${option.fuel} Fuel!` });
             }
         } catch (err) {
             console.error(err);
@@ -65,8 +70,6 @@ const FuelPopup = ({ onClose, buyFuel, showNotification }) => {
             handleBuy(option);
         }
     };
-
-
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
@@ -120,6 +123,7 @@ const FuelPopup = ({ onClose, buyFuel, showNotification }) => {
                     disabled={loading}
                     className={`mt-6 w-full font-bold py-3 rounded-xl transition shadow-[0_0_15px_rgba(255,0,0,0.6)] 
                         ${loading ? "bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"}`}
+                    style={{cursor: loading ? 'not-allowed' : 'pointer'}}
                 >
                     {loading ? (
                         <div className="flex items-center justify-center space-x-2">

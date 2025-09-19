@@ -9,7 +9,7 @@ const AVALANCHE_PARAMS = {
   blockExplorerUrls: ["https://snowtrace.io/"]
 };
 
-export async function connectMetaMask(setCredentials) {
+export async function connectMetaMask(setSigner) {
   let provider;
   if (window.ethereum?.providers) {
     const foundProvider = window.ethereum.providers.find((p) => p.isMetaMask);
@@ -41,8 +41,7 @@ export async function connectMetaMask(setCredentials) {
 
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
-
-  setCredentials({ provider, signer, address });
+  setSigner(signer)
 
   return { provider, signer, address };
 }

@@ -90,7 +90,7 @@ export function useFuelRacerCountdown(raceData) {
 
 export async function api(path, opts = {}) {
   const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort(), 10000);
+  const id = setTimeout(() => ctrl.abort(), 60000);
   const headers = useAuthHeader();
   try {
     const res = await fetch(`${BACKEND_URL}${path}`, { ...opts, signal: ctrl.signal, headers: { "Content-Type": "application/json", ...(headers || {}) } });
