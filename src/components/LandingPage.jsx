@@ -307,6 +307,7 @@ export default function LandingPage({
         if (data.error) { setStatus(data.error); return }
         setFuel(data.fuel)
         setStatus('Purchased fuel')
+        return data;
     }
 
     const onStartRaceClick = () => {

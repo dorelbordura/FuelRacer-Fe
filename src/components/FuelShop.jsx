@@ -7,7 +7,7 @@ const TOKEN_ADDRESS = process.env.REACT_APP_FUEL_TOKEN_ADDRESS;
 const FUELSHOP_ADDRESS = process.env.REACT_APP_FUEL_SHOP_CONTRACT;
 
 const fuelOptions = [
-    { id: 1, fuel: 1, price: 2, label: "1 Fuel", bonus: "0%", cost: parseUnits("2", 18) },
+    { id: 1, fuel: 1, price: 250_000, label: "1 Fuel", bonus: "0%", cost: parseUnits("250000", 18) },
     { id: 2, fuel: 5, price: 1_000_000, label: "5 Fuel", bonus: "+20%", cost: parseUnits("1000000", 18) },
     { id: 3, fuel: 20, price: 3_500_000, label: "20 Fuel", bonus: "+30%", cost: parseUnits("3500000", 18) },
 ];
@@ -50,11 +50,10 @@ const FuelPopup = ({ onClose, buyFuel, showNotification, signer }) => {
             // Notify backend
             const res = await buyFuel(option.fuel, receipt.hash);
 
-            console.log(res);
-
             if (res && res.fuel) {
                 setFuel(res.fuel);
                 showNotification({ message: `You bought ${option.fuel} Fuel!` });
+                onClose();
             }
         } catch (err) {
             console.error(err);
